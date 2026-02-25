@@ -10,7 +10,7 @@ genai.configure(api_key=settings.GEMINI_API_KEY)
 # Configure LangChain model
 # We use gemini-1.5-pro or gemini-pro depending on availability and needs
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro", 
+    model="gemini-2.5-flash", 
     google_api_key=settings.GEMINI_API_KEY,
     temperature=0.7
 )
