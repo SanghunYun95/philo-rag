@@ -5,17 +5,15 @@ create extension if not exists vector;
 CREATE TABLE documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   content text NOT NULL, -- English text chunk
-  embedding vector(1536), -- Vector data (1536 dims for text-embedding-ada-002, huggingface dims may vary, adjust if using a different local model e.g. 384 for sentence-transformers all-MiniLM-L6-v2)
+  embedding vector(3072), -- Vector data (3072 dims for gemini-embedding-001)
   metadata jsonb NOT NULL -- Metadata including philosopher, school of thought, and book info
 );
 
--- Note: If you use a local model like `all-MiniLM-L6-v2`, the dimension will be 384. 
--- The user prompt mentioned "1536-dimensional vectors" (which is typical for OpenAI), but also mentioned "local HuggingFace model". 
--- We'll assume the user indeed wants 1536, perhaps they have a specific local model in mind (e.g., modern BERT variants or they intend to match OpenAI dimensions). 
+-- Note: We are using `gemini-embedding-001` which has 3072 dimensions.
 
 -- Create a function to search for documents
 create or replace function match_documents (
-  query_embedding vector(1536),
+  query_embedding vector(3072),
   match_count int DEFAULT null,
   filter jsonb DEFAULT '{}'
 ) returns table (
