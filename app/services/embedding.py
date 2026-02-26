@@ -1,27 +1,24 @@
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from app.core.config import settings
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
 
-# Google's text-embedding-004 is a powerful model.
-# By default it produces 768 dimensions.
-# Since the database was initialized with 1536 dimensions, 
-# we should ideally match it or update the database schema.
-# For now, we'll use Gemini embeddings and recommend a schema update if necessary.
-
-MODEL_NAME = "models/gemini-embedding-001"
+# FastEmbed provides the exact same model (all-MiniLM-L6-v2) but via ONNX,
+# bypassing the need for PyTorch and Microsoft C++ Redistributables on Windows.
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 class EmbeddingService:
     def __init__(self):
-        # Using Gemini API for embeddings avoids the heavy local torch dependency
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model=MODEL_NAME,
-            google_api_key=settings.GEMINI_API_KEY
+        print(f"Loading local embedding model: {MODEL_NAME} (FastEmbed)...")
+        self.embeddings = FastEmbedEmbeddings(
+            model_name=MODEL_NAME,
+            max_length=512
         )
+        print("Local embedding model loaded successfully.")
         
     def generate_embedding(self, text: str) -> list[float]:
         """
-        Generates a vector embedding for the given text using Gemini.
+        Generates a vector embedding for the given text using the FastEmbed model.
+        Returns a list of 384 floats.
         """
-        # The invoke method returns a list of floats
+        # The embed_query method returns a list of floats
         return self.embeddings.embed_query(text)
 
 # Singleton instance
