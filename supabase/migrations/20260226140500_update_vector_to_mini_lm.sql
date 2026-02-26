@@ -11,9 +11,9 @@ BEGIN
     IF current_setting('app.allow_destructive_migrations', true) = 'true' THEN
         IF EXISTS (
             SELECT 1 FROM information_schema.columns 
-            WHERE table_name='documents' AND column_name='embedding'
+            WHERE table_schema='public' AND table_name='documents' AND column_name='embedding'
         ) THEN
-            TRUNCATE TABLE documents;
+            TRUNCATE TABLE public.documents;
         END IF;
     ELSE
         RAISE EXCEPTION 'Refusing to truncate public.documents without app.allow_destructive_migrations=true';
@@ -21,7 +21,7 @@ BEGIN
 END $$;
 
 -- 3. Alter the column type now that the table is empty
-ALTER TABLE documents 
+ALTER TABLE public.documents 
 ALTER COLUMN embedding TYPE vector(384);
 
 -- 3. Recreate the match_documents function with the new dimension

@@ -13,6 +13,9 @@ def is_allowed_url(url: str) -> bool:
     return parsed.scheme in {"http", "https"} and parsed.hostname in ALLOWED_HOSTS
 
 def get_html(url):
+    if not is_allowed_url(url):
+        print(f"Skipping disallowed URL: {url}")
+        return ""
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
         with urllib.request.urlopen(req, timeout=20) as response:
