@@ -1,0 +1,22 @@
+﻿node.exe : Initialising login role...
+위치 C:\Program Files\nodejs\npx.ps1:28 문자:
+12
++   $input | & $NODE_EXE $NPX_CLI_JS $arg
+s
++            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo          : NotSpecifi 
+   ed: (Initialising login role...:Stri  
+  ng) [], RemoteException
+    + FullyQualifiedErrorId : NativeComm 
+   andError
+ 
+Connecting to remote database...
+Do you want to push these migrations to t
+he remote database?
+ ??20260225141500_add_hnsw_index.sql
+
+ [Y/n] y
+Applying migration 20260225141500_add_hns
+w_index.sql...
+Finished supabase db push.

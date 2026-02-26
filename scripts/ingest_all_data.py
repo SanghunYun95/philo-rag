@@ -1,6 +1,9 @@
 import os
 import sys
 
+# Force UTF-8 encoding for standard output to prevent cp949 encoding errors on Windows
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 # Ensure we can import app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

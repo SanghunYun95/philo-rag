@@ -18,9 +18,9 @@ def verify_and_clear():
         print(f"Error clearing table: {e}")
         return
 
-    print("Verifying vector dimension (3072)...")
-    # Generate a dummy 3072-dimensional vector
-    dummy_vector = [0.0] * 3072
+    print("Verifying vector dimension (384)...")
+    # Generate a dummy 384-dimensional vector
+    dummy_vector = [0.0] * 384
     dummy_id = str(uuid.uuid4())
     
     try:
@@ -30,13 +30,13 @@ def verify_and_clear():
             "embedding": dummy_vector,
             "metadata": {"type": "verification"}
         }).execute()
-        print("Success: Vector dimension 3072 is accepted by the database.")
+        print("Success: Vector dimension 384 is accepted by the database.")
         
         # Clean up the dummy row
         supabase_client.table("documents").delete().eq("id", dummy_id).execute()
         print("Verification complete and database is clean.")
     except Exception as e:
-        print("Failed to insert 3072-dimensional vector. The schema might not be updated to 3072.")
+        print("Failed to insert 384-dimensional vector. The schema might not be updated to 384.")
         print(f"Error details: {e}")
 
 if __name__ == "__main__":
