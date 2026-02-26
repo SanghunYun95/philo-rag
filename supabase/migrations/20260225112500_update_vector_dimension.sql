@@ -11,7 +11,7 @@ ALTER COLUMN embedding TYPE vector(3072);
 -- 3. Recreate the function with new dimension
 create or replace function match_documents (
   query_embedding vector(3072),
-  match_count int DEFAULT null,
+  match_count int DEFAULT 10,
   filter jsonb DEFAULT '{}'
 ) returns table (
   id uuid,
@@ -22,6 +22,13 @@ create or replace function match_documents (
 language plpgsql
 as $$
 begin
+  match_count := COALESCE(match_count, 10);
+  if match_count < 1 then
+    match_count := 1;
+  elsif match_count > 200 then
+    match_count := 200;
+  end if;
+
   return query
   select
     documents.id,

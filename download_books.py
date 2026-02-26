@@ -6,6 +6,12 @@ import urllib.error
 import urllib.parse
 from html.parser import HTMLParser
 
+ALLOWED_HOSTS = {"www.gutenberg.org", "gutenberg.org"}
+
+def is_allowed_url(url: str) -> bool:
+    parsed = urllib.parse.urlparse(url)
+    return parsed.scheme in {"http", "https"} and parsed.hostname in ALLOWED_HOSTS
+
 def get_html(url):
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
@@ -121,10 +127,10 @@ def download_book(book, data_dir, base_url, target_count, downloaded_count):
     
     txt_url = parser.txt_url
     if txt_url:
-        txt_url = urllib.parse.urljoin(base_url, txt_url)
-        # Verify valid scheme to prevent SSRF
-        if not txt_url.startswith(('http://', 'https://')):
-            print(f"Skipping invalid URL scheme: {txt_url}")
+        txt_url = urllib.parse.urljoin(book_url, txt_url)
+        # Verify valid scheme and host to prevent SSRF
+        if not is_allowed_url(txt_url):
+            print(f"Skipping disallowed URL: {txt_url}")
             return downloaded_count
                 
         print(f"Downloading [{downloaded_count+1}/{target_count}]: {safe_title}")
@@ -176,9 +182,9 @@ def main():
             downloaded_count = download_book(book, data_dir, base_url, target_count, downloaded_count)
             
         if parser.next_page:
-            current_url = urllib.parse.urljoin(base_url, parser.next_page)
-            if not current_url.startswith(('http://', 'https://')):
-                print(f"Invalid next page URL scheme: {current_url}")
+            current_url = urllib.parse.urljoin(current_url, parser.next_page)
+            if not is_allowed_url(current_url):
+                print(f"Invalid next page URL: {current_url}")
                 current_url = None
         else:
             current_url = None

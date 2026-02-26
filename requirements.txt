@@ -1,12 +1,13 @@
 fastapi
 uvicorn
 supabase
-langchain
-langchain-google-genai
+langchain-core>=1.2.5,<2.0.0
+langchain-classic>=1.0.0,<2.0.0
+langchain-google-genai>=4.2.1,<5.0.0
 google-generativeai
 sse-starlette
 pydantic>=2.7.0
 pydantic-settings
 python-dotenv
-langchain-community
+langchain-community==0.4.1
 fastembed

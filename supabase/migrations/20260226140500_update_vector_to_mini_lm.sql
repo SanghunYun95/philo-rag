@@ -8,14 +8,15 @@ DROP FUNCTION IF EXISTS match_documents;
 -- 2. Clear existing incompatible 3072-dimension vectors to avoid casting errors
 DO $$
 BEGIN
-    -- This is a guard to prevent accidental truncation in production CI/CD.
-    -- In a real scenario, you'd check a configuration or role here.
-    -- For now, we explicitly execute it but wrap it to highlight the danger.
-    IF EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name='documents' AND column_name='embedding'
-    ) THEN
-        TRUNCATE TABLE documents;
+    IF current_setting('app.allow_destructive_migrations', true) = 'true' THEN
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name='documents' AND column_name='embedding'
+        ) THEN
+            TRUNCATE TABLE documents;
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'Refusing to truncate public.documents without app.allow_destructive_migrations=true';
     END IF;
 END $$;
 
@@ -37,6 +38,7 @@ create or replace function match_documents (
 language plpgsql
 as $$
 begin
+  match_count := COALESCE(match_count, 10);
   if match_count < 1 then
     match_count := 1;
   elsif match_count > 200 then

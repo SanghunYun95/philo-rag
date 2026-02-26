@@ -188,6 +188,9 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
                     })
                 except Exception as exc:
                     print(f"Chunk {idx} completely failed: {exc}")
+                    failed_batches.append(
+                        (i // BATCH_SIZE + 1, f"chunk {idx} failed: {exc}")
+                    )
                     
         # Upsert the batch to Supabase
         if batch_data:
