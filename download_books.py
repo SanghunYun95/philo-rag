@@ -12,13 +12,22 @@ def is_allowed_url(url: str) -> bool:
     parsed = urllib.parse.urlparse(url)
     return parsed.scheme in {"http", "https"} and parsed.hostname in ALLOWED_HOSTS
 
+class AllowedHostRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        resolved_url = urllib.parse.urljoin(req.full_url, newurl)
+        if not is_allowed_url(resolved_url):
+            raise urllib.error.URLError(f"Disallowed redirect URL: {resolved_url}")
+        return super().redirect_request(req, fp, code, msg, headers, resolved_url)
+
+SAFE_OPENER = urllib.request.build_opener(AllowedHostRedirectHandler())
+
 def get_html(url):
     if not is_allowed_url(url):
         print(f"Skipping disallowed URL: {url}")
         return ""
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        with urllib.request.urlopen(req, timeout=20) as response:
+        with SAFE_OPENER.open(req, timeout=20) as response:
             final_url = response.geturl()
             if not is_allowed_url(final_url):
                 print(f"Skipping redirected disallowed URL: {final_url}")
@@ -143,7 +152,7 @@ def download_book(book, data_dir, base_url, target_count, downloaded_count):
         print(f"Downloading [{downloaded_count+1}/{target_count}]: {safe_title}")
         try:
             req = urllib.request.Request(txt_url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=20) as resp:
+            with SAFE_OPENER.open(req, timeout=20) as resp:
                 final_url = resp.geturl()
                 if not is_allowed_url(final_url):
                     print(f"Skipping redirected disallowed URL: {final_url}")
