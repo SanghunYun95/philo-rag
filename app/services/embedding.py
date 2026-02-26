@@ -19,7 +19,12 @@ class EmbeddingService:
         Returns a list of 384 floats.
         """
         # The embed_query method returns a list of floats
-        return self.embeddings.embed_query(text)
+        embedding = self.embeddings.embed_query(text)
+        if len(embedding) != 384:
+            raise ValueError(
+                f"Unexpected embedding dimension: {len(embedding)} (expected 384)"
+            )
+        return embedding
 
 # Singleton instance
 embedding_service = EmbeddingService()

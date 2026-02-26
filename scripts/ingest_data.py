@@ -36,11 +36,29 @@ def fetch_aladin_metadata(title: str, author: str) -> Dict:
         "cover_url": "https://image.aladin.co.kr/product/dummy",
         "link": "https://www.aladin.co.kr/dummy-link"
     }
+UUID_NAMESPACE = uuid.UUID("6f0bdf73-9cc8-4e34-a302-a12037f0ac6d")
 
 def generate_deterministic_uuid(seed_text: str) -> str:
     """Generates a consistent UUID based on the input text to ensure idempotency."""
-    hash_obj = hashlib.md5(seed_text.encode('utf-8'))
-    return str(uuid.UUID(hash_obj.hexdigest()))
+    return str(uuid.uuid5(UUID_NAMESPACE, seed_text))
+
+def strip_gutenberg_boilerplate(text: str) -> str:
+    """Removes Project Gutenberg START and END identifiers from the text."""
+    start_marker = "*** START OF THE PROJECT GUTENBERG EBOOK"
+    end_marker = "*** END OF THE PROJECT GUTENBERG EBOOK"
+    
+    start_idx = text.upper().find(start_marker)
+    if start_idx != -1:
+        # Move past the marker line
+        newline_idx = text.find("\n", start_idx)
+        if newline_idx != -1:
+            text = text[newline_idx+1:]
+            
+    end_idx = text.upper().find(end_marker)
+    if end_idx != -1:
+        text = text[:end_idx]
+        
+    return text
 
 def generate_embedding_with_retry(text: str, max_retries: int = 3):
     """Wrapper to handle rate limiting and retries for the embedding API."""
@@ -74,7 +92,9 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
         "book_info": book_info
     }
     
-    # 2. Chunk text (Meaning units + Metadata Injection)
+    # 2. Chunk text (Meaning units + Metadata Injection + Boilerplate Stripping)
+    cleaned_text = strip_gutenberg_boilerplate(text)
+    
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
@@ -82,7 +102,7 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
         length_function=len,
         is_separator_regex=False,
     )
-    chunks = text_splitter.split_text(text)
+    chunks = text_splitter.split_text(cleaned_text)
     
     if limit is not None and limit > 0:
         chunks = chunks[:limit]
@@ -113,6 +133,8 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
 
     # 4. Batch Process: Chunk -> Embed -> Upsert Loop
     BATCH_SIZE = 100
+    failed_batches = []
+    
     for i in range(0, len(chunks), BATCH_SIZE):
         batch_chunks = chunks[i:i + BATCH_SIZE]
         batch_data = []
@@ -169,6 +191,10 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
                 print(f"✅ Successfully upserted {len(batch_data)} chunks to Supabase.")
             except Exception as e:
                 print(f"❌ Error upserting batch: {e}")
+                failed_batches.append((i // BATCH_SIZE + 1, str(e)))
+
+    if failed_batches:
+        raise RuntimeError(f"Ingestion incomplete. Failed batches: {failed_batches}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ingest philosophical texts into Supabase")

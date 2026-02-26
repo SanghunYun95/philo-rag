@@ -6,9 +6,14 @@ try:
     res = supabase_client.table('documents').select('id').limit(1).execute()
     print('Table exists')
     if res.data:
-        print(f'Found {len(res.data)} rows')
+        print('Found at least 1 row')
     else:
         print('Table is empty')
 except Exception as e:
-    print(f'Error or Table does not exist: {e}')
-    # No exit(1) because we want to know if it's just not there
+    error_msg = str(e).lower()
+    if 'relation "documents" does not exist' in error_msg or 'table missing' in error_msg or "code': '42p01'" in error_msg:
+        print("Table 'documents' does not exist yet. Please run migrations.")
+        sys.exit(0)
+    else:
+        print(f"Database connection or query error: {e}")
+        raise e

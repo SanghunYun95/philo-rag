@@ -8,7 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
 # Configure LangChain model
-# We use gemini-1.5-pro or gemini-pro depending on availability and needs
+# We use gemini-2.5-flash for faster and highly capable inference
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash", 
     google_api_key=settings.GEMINI_API_KEY,
