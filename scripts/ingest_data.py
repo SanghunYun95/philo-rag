@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import uuid
-import hashlib
 import urllib.request
 import argparse
 import concurrent.futures
@@ -15,6 +14,12 @@ from app.core.config import settings
 from app.services.embedding import embedding_service
 from app.services.database import supabase_client
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+class IngestionError(Exception):
+    """Raised when data ingestion fails."""
+    def __init__(self, failed_batches):
+        self.failed_batches = failed_batches
+        super().__init__(f"Ingestion incomplete. Failed batches: {failed_batches}")
 
 def fetch_aladin_metadata(title: str, author: str) -> Dict:
     """
@@ -117,6 +122,7 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
         res = supabase_client.table('documents') \
             .select('metadata') \
             .eq("metadata->>'scholar'", philosopher) \
+            .eq("metadata->'book_info'->>'title'", book_info.get('title')) \
             .execute()
         
         # Filter by title in python to avoid complex JSONB querying issues
@@ -194,7 +200,7 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
                 failed_batches.append((i // BATCH_SIZE + 1, str(e)))
 
     if failed_batches:
-        raise RuntimeError(f"Ingestion incomplete. Failed batches: {failed_batches}")
+        raise IngestionError(failed_batches)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Ingest philosophical texts into Supabase")

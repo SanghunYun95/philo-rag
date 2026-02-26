@@ -16,4 +16,4 @@ except Exception as e:
         sys.exit(0)
     else:
         print(f"Database connection or query error: {e}")
-        raise e
+        raise

@@ -3,6 +3,7 @@ import re
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 from html.parser import HTMLParser
 
 def get_html(url):
@@ -121,6 +122,10 @@ def download_book(book, data_dir, base_url, target_count, downloaded_count):
     txt_url = parser.txt_url
     if txt_url:
         txt_url = urllib.parse.urljoin(base_url, txt_url)
+        # Verify valid scheme to prevent SSRF
+        if not txt_url.startswith(('http://', 'https://')):
+            print(f"Skipping invalid URL scheme: {txt_url}")
+            return downloaded_count
                 
         print(f"Downloading [{downloaded_count+1}/{target_count}]: {safe_title}")
         try:
@@ -172,6 +177,9 @@ def main():
             
         if parser.next_page:
             current_url = urllib.parse.urljoin(base_url, parser.next_page)
+            if not current_url.startswith(('http://', 'https://')):
+                print(f"Invalid next page URL scheme: {current_url}")
+                current_url = None
         else:
             current_url = None
             
