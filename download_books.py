@@ -19,6 +19,10 @@ def get_html(url):
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
         with urllib.request.urlopen(req, timeout=20) as response:
+            final_url = response.geturl()
+            if not is_allowed_url(final_url):
+                print(f"Skipping redirected disallowed URL: {final_url}")
+                return ""
             return response.read().decode('utf-8', errors='replace')
     except Exception as e:
         print(f"Error fetching {url}: {e}")
@@ -140,6 +144,10 @@ def download_book(book, data_dir, base_url, target_count, downloaded_count):
         try:
             req = urllib.request.Request(txt_url, headers={'User-Agent': 'Mozilla/5.0'})
             with urllib.request.urlopen(req, timeout=20) as resp:
+                final_url = resp.geturl()
+                if not is_allowed_url(final_url):
+                    print(f"Skipping redirected disallowed URL: {final_url}")
+                    return downloaded_count
                 text = resp.read()
                 text = text.decode('utf-8', errors='replace')
                 with open(file_path, 'w', encoding='utf-8') as f:
