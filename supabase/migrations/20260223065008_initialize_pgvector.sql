@@ -25,6 +25,7 @@ create or replace function match_documents (
 language plpgsql
 as $$
 begin
+  match_count := COALESCE(match_count, 10);
   if match_count < 1 then
     match_count := 1;
   elsif match_count > 200 then

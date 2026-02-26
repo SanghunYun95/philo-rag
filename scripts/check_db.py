@@ -11,9 +11,13 @@ try:
         print('Table is empty')
 except Exception as e:
     error_msg = str(e).lower()
-    if 'relation "documents" does not exist' in error_msg or 'table missing' in error_msg or "code': '42p01'" in error_msg:
+    if (
+        'relation "documents" does not exist' in error_msg
+        or 'table missing' in error_msg
+        or '42p01' in error_msg
+    ):
         print("Table 'documents' does not exist yet. Please run migrations.")
-        sys.exit(0)
+        sys.exit(1)
     else:
         print(f"Database connection or query error: {e}")
         raise
