@@ -17,7 +17,7 @@ def main():
 
     failed_files = []
     
-    files = [f for f in os.listdir(data_dir) if f.endswith(".txt")]
+    files = sorted(f for f in os.listdir(data_dir) if f.endswith(".txt"))
     print(f"Found {len(files)} text files in {data_dir}.")
     
     for idx, filename in enumerate(files):
@@ -38,7 +38,7 @@ def main():
         
         print(f"\n[{idx+1}/{len(files)}] ==================================")
         print(f"Processing: {title} by {philosopher}")
-        print(f"==================================================")
+        print("==================================================")
         
         try:
             with open(filepath, 'r', encoding='utf-8') as f:

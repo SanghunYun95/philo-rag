@@ -14,7 +14,7 @@ CREATE TABLE documents (
 -- Create a function to search for documents
 create or replace function match_documents (
   query_embedding vector(3072),
-  match_count int DEFAULT null,
+  match_count int DEFAULT 10,
   filter jsonb DEFAULT '{}'
 ) returns table (
   id uuid,
@@ -25,6 +25,12 @@ create or replace function match_documents (
 language plpgsql
 as $$
 begin
+  if match_count < 1 then
+    match_count := 1;
+  elsif match_count > 200 then
+    match_count := 200;
+  end if;
+
   return query
   select
     documents.id,

@@ -2,7 +2,7 @@
 -- for gemini-embedding-001
 
 -- 1. Drop the existing function
-DROP FUNCTION IF EXISTS match_documents(vector(1536), int, jsonb);
+DROP FUNCTION IF EXISTS match_documents(vector(3072), int, jsonb);
 
 -- 2. Alter the table column
 ALTER TABLE documents 

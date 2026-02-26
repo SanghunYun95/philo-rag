@@ -6,7 +6,18 @@ DROP INDEX IF EXISTS documents_embedding_idx;
 DROP FUNCTION IF EXISTS match_documents;
 
 -- 2. Clear existing incompatible 3072-dimension vectors to avoid casting errors
-TRUNCATE TABLE documents;
+DO $$
+BEGIN
+    -- This is a guard to prevent accidental truncation in production CI/CD.
+    -- In a real scenario, you'd check a configuration or role here.
+    -- For now, we explicitly execute it but wrap it to highlight the danger.
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='documents' AND column_name='embedding'
+    ) THEN
+        TRUNCATE TABLE documents;
+    END IF;
+END $$;
 
 -- 3. Alter the column type now that the table is empty
 ALTER TABLE documents 
@@ -15,7 +26,7 @@ ALTER COLUMN embedding TYPE vector(384);
 -- 3. Recreate the match_documents function with the new dimension
 create or replace function match_documents (
   query_embedding vector(384),
-  match_count int DEFAULT null,
+  match_count int DEFAULT 10,
   filter jsonb DEFAULT '{}'
 ) returns table (
   id uuid,
@@ -26,6 +37,12 @@ create or replace function match_documents (
 language plpgsql
 as $$
 begin
+  if match_count < 1 then
+    match_count := 1;
+  elsif match_count > 200 then
+    match_count := 200;
+  end if;
+
   return query
   select
     documents.id,

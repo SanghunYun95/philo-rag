@@ -3,12 +3,13 @@ import re
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 from html.parser import HTMLParser
 
 def get_html(url):
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=20) as response:
             return response.read().decode('utf-8', errors='replace')
     except Exception as e:
         print(f"Error fetching {url}: {e}")
@@ -98,7 +99,7 @@ def download_book(book, data_dir, base_url, target_count, downloaded_count):
     if not href.startswith('/ebooks/'):
         return downloaded_count
         
-    book_url = base_url + href
+    book_url = urllib.parse.urljoin(base_url, href)
     title = book['title'].replace('\n', ' ').replace('\r', '')
     author = book['author'].replace('\n', ' ').replace('\r', '')
     
@@ -120,16 +121,16 @@ def download_book(book, data_dir, base_url, target_count, downloaded_count):
     
     txt_url = parser.txt_url
     if txt_url:
-        if not txt_url.startswith('http'):
-            if txt_url.startswith('//'):
-                txt_url = 'https:' + txt_url
-            else:
-                txt_url = base_url + txt_url
+        txt_url = urllib.parse.urljoin(base_url, txt_url)
+        # Verify valid scheme to prevent SSRF
+        if not txt_url.startswith(('http://', 'https://')):
+            print(f"Skipping invalid URL scheme: {txt_url}")
+            return downloaded_count
                 
         print(f"Downloading [{downloaded_count+1}/{target_count}]: {safe_title}")
         try:
             req = urllib.request.Request(txt_url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=20) as resp:
                 text = resp.read()
                 text = text.decode('utf-8', errors='replace')
                 with open(file_path, 'w', encoding='utf-8') as f:
@@ -175,7 +176,10 @@ def main():
             downloaded_count = download_book(book, data_dir, base_url, target_count, downloaded_count)
             
         if parser.next_page:
-            current_url = base_url + parser.next_page
+            current_url = urllib.parse.urljoin(base_url, parser.next_page)
+            if not current_url.startswith(('http://', 'https://')):
+                print(f"Invalid next page URL scheme: {current_url}")
+                current_url = None
         else:
             current_url = None
             
