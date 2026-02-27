@@ -4,6 +4,9 @@ import time
 import urllib.request
 import urllib.error
 import urllib.parse
+import sys
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 from html.parser import HTMLParser
 
 ALLOWED_HOSTS = {"www.gutenberg.org", "gutenberg.org"}

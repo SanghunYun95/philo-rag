@@ -11,9 +11,20 @@ def verify_and_clear():
     print("Clearing 'documents' table...")
     # Delete all rows
     try:
-        # A hack to delete all rows is to use an inequality that is always true
-        res = supabase_client.table("documents").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
-        print(f"Cleared {len(res.data)} rows from 'documents'.")
+        total_deleted = 0
+        while True:
+            # Fetch up to 100 IDs to delete
+            res = supabase_client.table("documents").select("id").limit(100).execute()
+            if not res.data:
+                break
+            ids = [r['id'] for r in res.data]
+            
+            # Batch delete
+            del_res = supabase_client.table("documents").delete().in_("id", ids).execute()
+            total_deleted += len(ids)
+            print(f"Deleted batch of {len(ids)} rows. Total deleted so far: {total_deleted}")
+            
+        print(f"Cleared {total_deleted} rows from 'documents'.")
     except Exception as e:
         print(f"Error clearing table: {e}")
         return

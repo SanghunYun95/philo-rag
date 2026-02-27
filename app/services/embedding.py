@@ -6,12 +6,18 @@ MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 class EmbeddingService:
     def __init__(self):
-        print(f"Loading local embedding model: {MODEL_NAME} (FastEmbed)...")
-        self.embeddings = FastEmbedEmbeddings(
-            model_name=MODEL_NAME,
-            max_length=512
-        )
-        print("Local embedding model loaded successfully.")
+        self._embeddings = None
+        
+    @property
+    def embeddings(self):
+        if self._embeddings is None:
+            print(f"Loading local embedding model: {MODEL_NAME} (FastEmbed)...")
+            self._embeddings = FastEmbedEmbeddings(
+                model_name=MODEL_NAME,
+                max_length=512
+            )
+            print("Local embedding model loaded successfully.")
+        return self._embeddings
         
     def generate_embedding(self, text: str) -> list[float]:
         """
