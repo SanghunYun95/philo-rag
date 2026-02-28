@@ -1,7 +1,5 @@
-from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
-# FastEmbed provides the exact same model (all-MiniLM-L6-v2) but via ONNX,
-# bypassing the need for PyTorch and Microsoft C++ Redistributables on Windows.
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 class EmbeddingService:
@@ -11,10 +9,11 @@ class EmbeddingService:
     @property
     def embeddings(self):
         if self._embeddings is None:
-            print(f"Loading local embedding model: {MODEL_NAME} (FastEmbed)...")
-            self._embeddings = FastEmbedEmbeddings(
+            print(f"Loading local embedding model: {MODEL_NAME} (HuggingFace)...")
+            self._embeddings = HuggingFaceEmbeddings(
                 model_name=MODEL_NAME,
-                max_length=512
+                model_kwargs={'device': 'cpu'},
+                encode_kwargs={'normalize_embeddings': True}
             )
             print("Local embedding model loaded successfully.")
         return self._embeddings

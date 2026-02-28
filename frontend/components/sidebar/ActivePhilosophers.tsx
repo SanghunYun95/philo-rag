@@ -1,53 +1,49 @@
 import { BrainCircuit, CheckCircle, Circle } from "lucide-react";
+import { DocumentMetadata } from "../../types/chat";
 
-export function ActivePhilosophers() {
+interface Props {
+    metadata: DocumentMetadata[];
+}
+
+export function ActivePhilosophers({ metadata }: Props) {
+    // extract unique philosophers
+    const uniquePhilosophers = Array.from(new Set(metadata.map(m => m.scholar)))
+        .map(scholar => metadata.find(m => m.scholar === scholar)!);
+
     return (
         <div>
             <h3 className="text-xs font-medium text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
                 <BrainCircuit className="w-4 h-4" />
-                Active Philosophers
+                활성화된 철학자
             </h3>
-            <div className="space-y-3">
-                {/* Card: Socrates */}
-                <div className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 hover:border-primary/50 transition-all duration-300 cursor-pointer">
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative flex items-center gap-4">
-                        <div
-                            className="h-12 w-12 rounded-full bg-cover bg-center border border-white/10"
-                            title="Classic marble bust of Socrates"
-                            style={{
-                                backgroundImage:
-                                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBXK4XMP9l5KyHJ9syIoaqwwL3r7nVaNTaEzWXOniPvvE-822RA1SPpn4EGrYAzGPwG1KR3gmL8acZu3MEl-tyfavsKe6YiqGismcCqgYPz7LvX3mZiM0XP1P_hp9oTTliEOfns01tel4TnFlCEZNFleoSewQPUF0NKxynepVE1pasMwTCQlklrYw9fpWp4jGx-PJJllagqIwf9AAhJmOJTc6TYkrqSl_sqemG308t2wggfKqLK-eJG8YEZ2_cSFC7wVLTLxeNucek')",
-                            }}
-                        ></div>
-                        <div>
-                            <h4 className="font-display text-lg text-white">Socrates</h4>
-                            <p className="text-xs text-white/50">Socratic Method, Ethics</p>
-                        </div>
-                        <CheckCircle className="ml-auto text-primary/50 group-hover:text-primary w-5 h-5" />
-                    </div>
+            {uniquePhilosophers.length === 0 ? (
+                <p className="text-white/30 text-xs italic">현재 참조 중인 철학자가 없습니다.</p>
+            ) : (
+                <div className="space-y-3">
+                    {uniquePhilosophers.map((meta, i) => (
+                        <button
+                            key={i}
+                            type="button"
+                            className="w-full text-left group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 hover:border-primary/50 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="relative flex items-center gap-4">
+                                <div
+                                    className="h-12 w-12 shrink-0 rounded-full border border-white/20 bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center shadow-inner"
+                                    title={meta.scholar}
+                                >
+                                    <span className="font-display text-xl text-primary/90">{meta.scholar.charAt(0)}</span>
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-display text-lg text-white">{meta.scholar}</h4>
+                                    <p className="text-xs text-white/50">{meta.school}</p>
+                                </div>
+                                <CheckCircle className="ml-auto text-primary/50 group-hover:text-primary w-5 h-5 shrink-0" />
+                            </div>
+                        </button>
+                    ))}
                 </div>
-
-                {/* Card: Nietzsche */}
-                <div className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 hover:border-primary/50 transition-all duration-300 cursor-pointer">
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <div className="relative flex items-center gap-4">
-                        <div
-                            className="h-12 w-12 rounded-full bg-cover bg-center border border-white/10"
-                            title="Portrait painting of Friedrich Nietzsche"
-                            style={{
-                                backgroundImage:
-                                    "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDErNgOWlAkVq6mRofu82tAsDD6uo_nA0PoHWBXQRzurO3DQn7HrKB4XTuPCO6H6_vRK3gCUIA-bdDQNh21vf2nQwgHW39ceCk7mkv8UZRMs4LMLnlaxScn9-sk99ie97owvAdVOyKfB3wMTLH2svh77GvE3_6_3bSfVzwg9Y3IOe0XEiYdgi_d-AdDCictbZxsV3fydwD-4GYdmKF-sE3uTYsZillX2ZOF1LE0zQFViZh2fqXMQdOj9lJXqRL7QHYatHg7PI5maTw')",
-                            }}
-                        ></div>
-                        <div>
-                            <h4 className="font-display text-lg text-white">Nietzsche</h4>
-                            <p className="text-xs text-white/50">Existentialism, Will to Power</p>
-                        </div>
-                        <Circle className="ml-auto text-white/20 group-hover:text-white/40 w-5 h-5" />
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
     );
 }
