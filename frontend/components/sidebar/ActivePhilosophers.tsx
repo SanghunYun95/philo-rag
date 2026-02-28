@@ -1,4 +1,4 @@
-import { BrainCircuit, CheckCircle, Circle } from "lucide-react";
+import { BrainCircuit, CheckCircle } from "lucide-react";
 import { DocumentMetadata } from "../../types/chat";
 
 interface Props {
@@ -6,9 +6,9 @@ interface Props {
 }
 
 export function ActivePhilosophers({ metadata }: Props) {
-    // extract unique philosophers
     const uniquePhilosophers = Array.from(new Set(metadata.map(m => m.scholar)))
-        .map(scholar => metadata.find(m => m.scholar === scholar)!);
+        .map(scholar => metadata.find(m => m.scholar === scholar))
+        .filter((m): m is DocumentMetadata => m !== undefined);
 
     return (
         <div>

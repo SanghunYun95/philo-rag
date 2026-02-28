@@ -7,8 +7,10 @@ def get_supabase_client() -> Client:
     The Service Key is used to bypass RLS for administrative backend tasks 
     like upserting documents or fetching metadata securely.
     """
-    supabase_url = settings.SUPABASE_URL or "http://localhost:8000"
-    supabase_key = settings.SUPABASE_SERVICE_KEY or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSJ9.1234567890"
+    supabase_url = settings.SUPABASE_URL
+    supabase_key = settings.SUPABASE_SERVICE_KEY
+    if not supabase_url or not supabase_key:
+        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured")
     return create_client(supabase_url, supabase_key)
 
 # Initialize a global client to be reused

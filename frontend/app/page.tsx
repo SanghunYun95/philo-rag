@@ -12,8 +12,8 @@ export default function Home() {
     const handleSendMessage = async (query: string) => {
         if (!query.trim() || isSubmitting) return;
 
-        const userMsgId = Date.now().toString();
-        const aiMsgId = (Date.now() + 1).toString();
+        const userMsgId = crypto.randomUUID();
+        const aiMsgId = crypto.randomUUID();
 
         const newUserMsg: Message = {
             id: userMsgId,
@@ -48,7 +48,35 @@ export default function Home() {
             const decoder = new TextDecoder();
             if (!reader) throw new Error("No reader");
 
-            let currentEvent = "";
+            const processLine = (line: string, eventObj: { current: string }) => {
+                if (line.startsWith("event: ")) {
+                    eventObj.current = line.substring(7).trim();
+                } else if (line.startsWith("data: ")) {
+                    const currentData = line.substring(6);
+
+                    if (eventObj.current === "metadata" && currentData.trim() !== "") {
+                        try {
+                            const metaJson = JSON.parse(currentData);
+                            setMessages((prev) =>
+                                prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: metaJson.philosophers } : msg)
+                            );
+                        } catch (e) { console.error("Could not parse metadata event:", currentData) }
+                    } else if (eventObj.current === "content") {
+                        // un-escape \\n to real newlines
+                        const char = currentData.replace(/\\n/g, '\n');
+                        setMessages((prev) =>
+                            prev.map(msg => msg.id === aiMsgId ? { ...msg, content: msg.content + char } : msg)
+                        );
+                    } else if (eventObj.current === "error") {
+                        console.error("Chat error:", currentData);
+                        setMessages((prev) =>
+                            prev.map(msg => msg.id === aiMsgId ? { ...msg, content: currentData, isStreaming: false } : msg)
+                        );
+                    }
+                }
+            };
+
+            let eventObj = { current: "" };
             let buffer = "";
 
             while (true) {
@@ -58,17 +86,7 @@ export default function Home() {
                     if (buffer) {
                         const lines = buffer.split('\n');
                         for (const line of lines) {
-                            if (line.startsWith("event: ")) {
-                                currentEvent = line.substring(7).trim();
-                            } else if (line.startsWith("data: ")) {
-                                const currentData = line.substring(6);
-                                if (currentEvent === "content") {
-                                    const char = currentData.replace(/\\n/g, '\n');
-                                    setMessages((prev) =>
-                                        prev.map(msg => msg.id === aiMsgId ? { ...msg, content: msg.content + char } : msg)
-                                    );
-                                }
-                            }
+                            processLine(line, eventObj);
                         }
                     }
                     break;
@@ -81,31 +99,7 @@ export default function Home() {
                 buffer = lines.pop() || "";
 
                 for (const line of lines) {
-                    if (line.startsWith("event: ")) {
-                        currentEvent = line.substring(7).trim();
-                    } else if (line.startsWith("data: ")) {
-                        const currentData = line.substring(6);
-
-                        if (currentEvent === "metadata" && currentData.trim() !== "") {
-                            try {
-                                const metaJson = JSON.parse(currentData);
-                                setMessages((prev) =>
-                                    prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: metaJson.philosophers } : msg)
-                                );
-                            } catch (e) { console.error("Could not parse metadata event:", currentData) }
-                        } else if (currentEvent === "content") {
-                            // un-escape \\n to real newlines
-                            const char = currentData.replace(/\\n/g, '\n');
-                            setMessages((prev) =>
-                                prev.map(msg => msg.id === aiMsgId ? { ...msg, content: msg.content + char } : msg)
-                            );
-                        } else if (currentEvent === "error") {
-                            console.error("Chat error:", currentData);
-                            setMessages((prev) =>
-                                prev.map(msg => msg.id === aiMsgId ? { ...msg, content: currentData, isStreaming: false } : msg)
-                            );
-                        }
-                    }
+                    processLine(line, eventObj);
                 }
             }
 

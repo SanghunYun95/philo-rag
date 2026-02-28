@@ -1,5 +1,6 @@
 import json
 import asyncio
+import logging
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
@@ -9,6 +10,7 @@ from app.services.embedding import embedding_service
 from app.services.database import supabase_client
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 class ChatRequest(BaseModel):
     query: str
@@ -21,7 +23,8 @@ async def generate_chat_events(request: Request, query: str):
     # 1. Translate Korean query to English
     try:
         english_query = get_english_translation(query)
-    except Exception as e:
+    except Exception:
+        logger.exception("Failed to translate query")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
     
@@ -29,6 +32,7 @@ async def generate_chat_events(request: Request, query: str):
     try:
         query_vector = embedding_service.generate_embedding(english_query)
     except Exception:
+        logger.exception("Failed to generate query embedding")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
     
@@ -41,6 +45,7 @@ async def generate_chat_events(request: Request, query: str):
         ).execute()
         documents = response.data
     except Exception as e:
+        logger.exception("Database search failed")
         yield {"event": "error", "data": f"Database search failed: {str(e)}"}
         return
         
@@ -82,7 +87,8 @@ async def generate_chat_events(request: Request, query: str):
             # Clean up chunk to avoid SSE formatting issues with newlines
             chunk_clean = chunk.replace("\n", "\\n")
             yield {"event": "content", "data": chunk_clean}
-    except Exception as e:
+    except Exception:
+        logger.exception("Failed while streaming LLM response")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
 
