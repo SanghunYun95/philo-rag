@@ -4,8 +4,8 @@
   --color-primary: #d9b74a;
   --color-surface-dark: #1a1a1e;
   --color-background-dark: #0f0f11;
-  --font-display: "Newsreader", serif;
-  --font-sans: "Inter", "Noto Sans KR", sans-serif;
+  --font-display: var(--font-newsreader), "Newsreader", serif;
+  --font-sans: var(--font-inter), var(--font-noto-sans-kr), "Inter", "Noto Sans KR", sans-serif;
 }
 
 :root {

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PhiloRAG Chat Interface</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Noto+Sans:ital,wght@0,100..900;1,100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#d9b74a",
+                        "background-light": "#f8f7f6",
+                        "background-dark": "#0f0f11", 
+                        "surface-dark": "#1a1a1e",
+                        "accent-gold": "#d4af37",
+                    },
+                    fontFamily: {
+                        "display": ["Newsreader", "serif"],
+                        "sans": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0f11;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen text-slate-900 dark:text-slate-100 font-sans selection:bg-primary/30 selection:text-primary">
+<div class="flex h-screen overflow-hidden">
+<!-- Left Column: Knowledge Base / Context Panel (30%) -->
+<aside class="w-[30%] min-w-[320px] max-w-[400px] h-full border-r border-white/5 bg-surface-dark flex flex-col relative z-20 shadow-xl">
+<!-- Header -->
+<div class="p-6 border-b border-white/5 flex items-center gap-4">
+<div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-amber-700 flex items-center justify-center text-background-dark font-display font-bold text-xl">
+                    P
+                </div>
+<div>
+<h1 class="font-display text-2xl font-medium tracking-tight text-white">PhiloRAG</h1>
+<p class="text-xs text-white/40 uppercase tracking-widest mt-0.5">Philosophical Discourse</p>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-6 space-y-8">
+<!-- Section: Active Philosophers -->
+<div>
+<h3 class="text-xs font-medium text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">psychology</span>
+                        Active Philosophers
+                    </h3>
+<div class="space-y-3">
+<!-- Card: Socrates -->
+<div class="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 hover:border-primary/50 transition-all duration-300 cursor-pointer">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative flex items-center gap-4">
+<div class="h-12 w-12 rounded-full bg-cover bg-center border border-white/10" data-alt="Classic marble bust of Socrates" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBXK4XMP9l5KyHJ9syIoaqwwL3r7nVaNTaEzWXOniPvvE-822RA1SPpn4EGrYAzGPwG1KR3gmL8acZu3MEl-tyfavsKe6YiqGismcCqgYPz7LvX3mZiM0XP1P_hp9oTTliEOfns01tel4TnFlCEZNFleoSewQPUF0NKxynepVE1pasMwTCQlklrYw9fpWp4jGx-PJJllagqIwf9AAhJmOJTc6TYkrqSl_sqemG308t2wggfKqLK-eJG8YEZ2_cSFC7wVLTLxeNucek');"></div>
+<div>
+<h4 class="font-display text-lg text-white">Socrates</h4>
+<p class="text-xs text-white/50">Socratic Method, Ethics</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-primary/50 group-hover:text-primary">radio_button_checked</span>
+</div>
+</div>
+<!-- Card: Nietzsche -->
+<div class="group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 hover:border-primary/50 transition-all duration-300 cursor-pointer">
+<div class="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="relative flex items-center gap-4">
+<div class="h-12 w-12 rounded-full bg-cover bg-center border border-white/10" data-alt="Portrait painting of Friedrich Nietzsche" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDErNgOWlAkVq6mRofu82tAsDD6uo_nA0PoHWBXQRzurO3DQn7HrKB4XTuPCO6H6_vRK3gCUIA-bdDQNh21vf2nQwgHW39ceCk7mkv8UZRMs4LMLnlaxScn9-sk99ie97owvAdVOyKfB3wMTLH2svh77GvE3_6_3bSfVzwg9Y3IOe0XEiYdgi_d-AdDCictbZxsV3fydwD-4GYdmKF-sE3uTYsZillX2ZOF1LE0zQFViZh2fqXMQdOj9lJXqRL7QHYatHg7PI5maTw');"></div>
+<div>
+<h4 class="font-display text-lg text-white">Nietzsche</h4>
+<p class="text-xs text-white/50">Existentialism, Will to Power</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-white/20 group-hover:text-white/40">radio_button_unchecked</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Referenced Texts -->
+<div>
+<h3 class="text-xs font-medium text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">menu_book</span>
+                        Context Sources
+                    </h3>
+<div class="space-y-3">
+<div class="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer border border-transparent hover:border-white/5">
+<div class="h-14 w-10 bg-neutral-800 rounded border border-white/10 flex items-center justify-center shrink-0 shadow-lg group-hover:border-primary/30 transition-colors">
+<span class="material-symbols-outlined text-white/30 text-lg">book_2</span>
+</div>
+<div>
+<h5 class="font-display text-base text-white/90 group-hover:text-primary transition-colors">Beyond Good and Evil</h5>
+<p class="text-xs text-white/40 mt-1">Chapter 4: Apothegms and Interludes</p>
+<div class="flex items-center gap-1 mt-2">
+<span class="px-1.5 py-0.5 rounded bg-primary/10 text-[10px] text-primary border border-primary/20">High Relevance</span>
+</div>
+</div>
+</div>
+<div class="flex items-start gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer border border-transparent hover:border-white/5">
+<div class="h-14 w-10 bg-neutral-800 rounded border border-white/10 flex items-center justify-center shrink-0 shadow-lg group-hover:border-primary/30 transition-colors">
+<span class="material-symbols-outlined text-white/30 text-lg">book_2</span>
+</div>
+<div>
+<h5 class="font-display text-base text-white/90 group-hover:text-primary transition-colors">The Republic</h5>
+<p class="text-xs text-white/40 mt-1">Book I: Justice</p>
+<div class="flex items-center gap-1 mt-2">
+<span class="px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-white/50 border border-white/10">Reference</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- System Status -->
+<div class="mt-auto pt-6 border-t border-white/5">
+<div class="flex items-center justify-between text-xs text-white/40">
+<span>Model: Philo-GPT-4</span>
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+<span class="text-emerald-500/80">Operational</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Controls -->
+<div class="p-4 border-t border-white/5 bg-black/20">
+<div class="flex items-center justify-around">
+<button class="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors" title="Settings">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors" title="History">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors" title="Profile">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Right Column: Main Chat Area (70%) -->
+<main class="flex-1 flex flex-col relative h-full bg-background-dark">
+<!-- Top Navigation / Context Header -->
+<div class="absolute top-0 left-0 right-0 z-10 p-6 flex justify-between items-start pointer-events-none">
+<div class="pointer-events-auto">
+<h2 class="font-display text-3xl text-white/90">Dialogue on Virtue</h2>
+<p class="text-sm text-white/40 mt-1">Session started today at 10:42 AM</p>
+</div>
+<div class="flex gap-2 pointer-events-auto">
+<button class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">ios_share</span>
+                        Export
+                    </button>
+<button class="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+                        New Chat
+                    </button>
+</div>
+</div>
+<!-- Chat Content Scroll Area -->
+<div class="flex-1 overflow-y-auto px-8 pt-32 pb-32 scroll-smooth">
+<div class="max-w-3xl mx-auto flex flex-col gap-10">
+<!-- User Message -->
+<div class="flex justify-end group">
+<div class="flex flex-col items-end max-w-[80%]">
+<div class="bg-surface-dark border border-white/10 rounded-2xl rounded-tr-sm px-6 py-4 shadow-lg">
+<p class="text-white/90 font-sans leading-relaxed">
+                                    How would Socrates define virtue in the context of modern ethics, particularly regarding digital privacy?
+                                </p>
+</div>
+<span class="text-[11px] text-white/20 mt-2 mr-2">User • 10:43 AM</span>
+</div>
+</div>
+<!-- AI Response -->
+<div class="flex gap-6 group">
+<div class="shrink-0 flex flex-col items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-gradient-to-br from-surface-dark to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
+<span class="material-symbols-outlined text-primary text-xl">auto_awesome</span>
+</div>
+<div class="w-px h-full bg-gradient-to-b from-white/10 to-transparent"></div>
+</div>
+<div class="flex-1 pb-8">
+<div class="flex items-center gap-3 mb-2">
+<span class="font-display font-bold text-primary text-lg">PhiloRAG</span>
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-[10px] text-primary uppercase tracking-wider border border-primary/20">Thinking</span>
+</div>
+<div class="prose prose-invert max-w-none">
+<p class="text-white/80 font-display text-xl leading-relaxed mb-6">
+                                    To understand virtue through the Socratic lens in our digital age, one must first return to his fundamental premise: <em class="text-white">virtue is knowledge</em>.
+                                </p>
+<p class="text-white/60 font-sans leading-7 mb-6">
+                                    Socrates argued that no one errs willingly; rather, vice is the result of ignorance. In the context of digital privacy, he might argue that the "evil" of surveillance or data exploitation stems not from malice, but from a profound ignorance of the <span class="text-primary/80 border-b border-primary/30 pb-0.5">True Good</span> regarding the self and the community.
+                                </p>
+<div class="pl-6 border-l-2 border-primary/40 my-8 py-1">
+<p class="font-display italic text-white/70 text-lg">
+                                        "The unexamined life is not worth living."
+                                    </p>
+<p class="text-xs text-primary mt-2 uppercase tracking-widest">— Apology, 38a</p>
+</div>
+<p class="text-white/60 font-sans leading-7">
+                                    If we apply this to your question, a "virtuous" digital existence would require:
+                                </p>
+<ul class="list-none space-y-3 mt-4 text-white/70 font-sans">
+<li class="flex gap-3">
+<span class="text-primary material-symbols-outlined text-sm pt-1">arrow_right_alt</span>
+<span><strong>Knowledge of the Self:</strong> Understanding what data constitutes the "digital soul" and protecting it as one protects their character.</span>
+</li>
+<li class="flex gap-3">
+<span class="text-primary material-symbols-outlined text-sm pt-1">arrow_right_alt</span>
+<span><strong>Knowledge of the Good:</strong> Recognizing that privacy is not merely hiding, but maintaining the autonomy required for moral agency.</span>
+</li>
+</ul>
+</div>
+<!-- Interactive Citation Card embedded in response -->
+<div class="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer">
+<div class="h-16 w-12 shrink-0 bg-cover bg-center rounded shadow-inner opacity-80" data-alt="Cover of Plato's Republic book" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB0kzQPApdugd8DAq405iPtJUN3KwxNoOhnU6U_-gIAFVlKHj9ecCztHeXwVafq5nL4ADGFDuozS_iOYdD1eXlVrP471L_bmhpz8tLheZ8TQSo9kxClvJiZdltmO1Ysngs29XLzkGdCjYIBNrnpG1n0rEmEmcbTsX5dfrTi-QBZcNusirPuXskWMZiVqQmrbNP_aTJM44KlUmvB_t5RfGl8lg8ER20GNWCCu_destp9BAopuVohFr65NGdqaI9sJmaWK1TBow_Zw1A');"></div>
+<div class="flex-1 min-w-0">
+<h5 class="text-white font-display text-lg truncate">Reference: The Republic, Book I</h5>
+<p class="text-white/40 text-sm line-clamp-2 mt-1">Socrates discusses the nature of justice and whether the just man is happier than the unjust man.</p>
+</div>
+<button class="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-primary hover:text-background-dark transition-all self-center">
+<span class="material-symbols-outlined text-lg">arrow_outward</span>
+</button>
+</div>
+<div class="flex gap-4 mt-6">
+<button class="text-xs text-white/40 hover:text-primary flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm">thumb_up</span> Helpful
+                                </button>
+<button class="text-xs text-white/40 hover:text-primary flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm">content_copy</span> Copy
+                                </button>
+<button class="text-xs text-white/40 hover:text-primary flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm">autorenew</span> Regenerate
+                                </button>
+</div>
+</div>
+</div>
+<!-- Another User Message (Short) -->
+<div class="flex justify-end group animate-pulse">
+<div class="flex flex-col items-end max-w-[80%]">
+<div class="bg-surface-dark border border-white/10 rounded-2xl rounded-tr-sm px-6 py-4 shadow-lg">
+<p class="text-white/90 font-sans leading-relaxed">
+                                    But isn't transparency also a virtue?
+                                </p>
+</div>
+<span class="text-[11px] text-white/20 mt-2 mr-2">User • Now</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Input Area -->
+<div class="absolute bottom-8 left-0 right-0 px-8 flex justify-center z-20">
+<div class="w-full max-w-3xl relative group">
+<!-- Glow effect behind input -->
+<div class="absolute -inset-0.5 bg-gradient-to-r from-primary/20 via-white/10 to-primary/20 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+<div class="relative flex items-end gap-2 bg-[#1e1e24] p-2 pr-2 pl-4 rounded-2xl border border-white/10 shadow-2xl">
+<button class="mb-2 p-2 rounded-lg text-white/30 hover:text-primary hover:bg-white/5 transition-colors" title="Upload Context">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<div class="flex-1 py-3">
+<textarea class="w-full bg-transparent border-0 text-white placeholder-white/20 focus:ring-0 p-0 resize-none font-sans leading-relaxed max-h-32" placeholder="Inquire about virtue, metaphysics, or ethics..." rows="1" style="min-height: 24px;"></textarea>
+</div>
+<div class="flex items-center gap-1 mb-1">
+<button class="p-2 rounded-lg text-white/30 hover:text-primary hover:bg-white/5 transition-colors" title="Voice Input">
+<span class="material-symbols-outlined">mic</span>
+</button>
+<button class="h-10 w-10 rounded-xl bg-white text-background-dark flex items-center justify-center hover:bg-primary transition-colors shadow-lg hover:shadow-primary/20">
+<span class="material-symbols-outlined">arrow_upward</span>
+</button>
+</div>
+</div>
+<div class="text-center mt-3">
+<p class="text-[10px] text-white/20">PhiloRAG can make mistakes. Verify important philosophical references.</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

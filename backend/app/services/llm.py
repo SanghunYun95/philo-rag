@@ -11,8 +11,9 @@ genai.configure(api_key=settings.GEMINI_API_KEY)
 # We use gemini-2.5-flash for faster and highly capable inference
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash", 
-    google_api_key=settings.GEMINI_API_KEY,
-    temperature=0.7
+    google_api_key=settings.GEMINI_API_KEY or "dummy_key_for_testing",
+    temperature=0.7,
+    max_retries=0
 )
 
 translation_prompt = PromptTemplate.from_template(

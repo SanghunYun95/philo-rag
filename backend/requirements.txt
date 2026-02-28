@@ -10,4 +10,4 @@ pydantic>=2.7.0
 pydantic-settings
 python-dotenv
 langchain-community==0.4.1
-fastembed
+sentence-transformers
