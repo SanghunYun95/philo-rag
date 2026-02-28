@@ -7,12 +7,22 @@ from langchain_core.output_parsers import StrOutputParser
 # Configure Gemini API natively (optional, if native SDK features are needed)
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
+# Monkey-patch LangChain's custom retry logic to fail fast on 429 ResourceExhausted
+import langchain_google_genai.chat_models
+from tenacity import retry, stop_after_attempt
+
+def _no_retry_decorator():
+    return retry(reraise=True, stop=stop_after_attempt(1))
+
+langchain_google_genai.chat_models._create_retry_decorator = _no_retry_decorator
+
 # Configure LangChain model
 # We use gemini-2.5-flash for faster and highly capable inference
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash", 
     google_api_key=settings.GEMINI_API_KEY,
-    temperature=0.7
+    temperature=0.7,
+    max_retries=0
 )
 
 translation_prompt = PromptTemplate.from_template(

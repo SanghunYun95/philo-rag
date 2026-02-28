@@ -77,6 +77,9 @@ export default function Home() {
                             );
                         } else if (currentEvent === "error") {
                             console.error("Chat error:", currentData);
+                            setMessages((prev) =>
+                                prev.map(msg => msg.id === aiMsgId ? { ...msg, content: currentData, isStreaming: false } : msg)
+                            );
                         }
                     }
                 }

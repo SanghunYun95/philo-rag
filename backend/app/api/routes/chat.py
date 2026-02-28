@@ -19,7 +19,11 @@ async def generate_chat_events(request: Request, query: str):
     It yields 'metadata' first, then chunks of 'content'.
     """
     # 1. Translate Korean query to English
-    english_query = get_english_translation(query)
+    try:
+        english_query = get_english_translation(query)
+    except Exception as e:
+        yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
+        return
     
     # 2. Generate vector representation
     query_vector = embedding_service.generate_embedding(english_query)
@@ -62,16 +66,21 @@ async def generate_chat_events(request: Request, query: str):
 
     # 6. Emit Event 2: content (Text chunk streaming via LLM)
     combined_context = "\n\n".join(contexts)
-    llm_stream = get_response_stream(context=combined_context, query=english_query)
     
-    for chunk in llm_stream:
-        # If client disconnects, stop generating
-        if await request.is_disconnected():
-            break
-            
-        # Clean up chunk to avoid SSE formatting issues with newlines
-        chunk_clean = chunk.replace("\n", "\\n")
-        yield {"event": "content", "data": chunk_clean}
+    try:
+        llm_stream = get_response_stream(context=combined_context, query=english_query)
+        
+        for chunk in llm_stream:
+            # If client disconnects, stop generating
+            if await request.is_disconnected():
+                break
+                
+            # Clean up chunk to avoid SSE formatting issues with newlines
+            chunk_clean = chunk.replace("\n", "\\n")
+            yield {"event": "content", "data": chunk_clean}
+    except Exception as e:
+        yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
+        return
 
 @router.post("")
 async def chat_endpoint(request: Request, chat_request: ChatRequest):
