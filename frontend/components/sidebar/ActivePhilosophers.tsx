@@ -22,7 +22,7 @@ export function ActivePhilosophers({ metadata }: Props) {
                 <div className="space-y-3">
                     {uniquePhilosophers.map((meta, i) => (
                         <button
-                            key={i}
+                            key={meta.scholar}
                             type="button"
                             className="w-full text-left group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 hover:border-primary/50 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                         >

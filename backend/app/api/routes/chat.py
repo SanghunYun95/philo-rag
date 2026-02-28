@@ -26,7 +26,11 @@ async def generate_chat_events(request: Request, query: str):
         return
     
     # 2. Generate vector representation
-    query_vector = embedding_service.generate_embedding(english_query)
+    try:
+        query_vector = embedding_service.generate_embedding(english_query)
+    except Exception:
+        yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
+        return
     
     # 3. Perform hybrid search in Supabase
     # We use the RPC match_documents function defined in schema.sql

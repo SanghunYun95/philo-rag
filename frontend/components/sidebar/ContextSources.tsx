@@ -1,4 +1,5 @@
 import { BookOpen, Star } from "lucide-react";
+import Image from "next/image";
 import { DocumentMetadata } from "../../types/chat";
 
 interface Props {
@@ -28,7 +29,7 @@ export function ContextSources({ metadata }: Props) {
                             >
                                 <div className="h-16 w-12 shrink-0 bg-white/5 rounded border border-white/10 shadow-sm relative overflow-hidden flex items-center justify-center">
                                     {meta.book_info.cover_url && !meta.book_info.cover_url.includes("dummy") ? (
-                                        <img src={meta.book_info.cover_url} alt={meta.book_info.title} className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
+                                        <Image src={meta.book_info.cover_url} alt={meta.book_info.title} fill sizes="48px" className="object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all" />
                                     ) : (
                                         <BookOpen className="w-5 h-5 text-white/20" />
                                     )}

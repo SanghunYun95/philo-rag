@@ -44,13 +44,13 @@ export function Sidebar({ messages = [] }: SidebarProps) {
             {/* Bottom Controls */}
             <div className="p-4 border-t border-white/5 bg-black/20">
                 <div className="flex items-center justify-around">
-                    <button type="button" aria-label="설정" className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60" title="설정">
+                    <button type="button" aria-label="설정" onClick={() => alert("준비 중입니다.")} className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60" title="설정">
                         <Settings className="w-5 h-5" />
                     </button>
-                    <button type="button" aria-label="대화 기록" className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60" title="대화 기록">
+                    <button type="button" aria-label="대화 기록" onClick={() => alert("준비 중입니다.")} className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60" title="대화 기록">
                         <History className="w-5 h-5" />
                     </button>
-                    <button type="button" aria-label="프로필" className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60" title="프로필">
+                    <button type="button" aria-label="프로필" onClick={() => alert("준비 중입니다.")} className="p-2 rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60" title="프로필">
                         <User className="w-5 h-5" />
                     </button>
                 </div>

@@ -17,7 +17,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className="dark">
+        <html lang="ko" className="dark">
             <body
                 className={`${inter.variable} ${newsreader.variable} ${notoSansKr.variable} bg-[#0f0f11] min-h-screen text-slate-100 font-sans antialiased`}
                 style={{
