@@ -12,8 +12,8 @@ export default function Home() {
     const handleSendMessage = async (query: string) => {
         if (!query.trim() || isSubmitting) return;
 
-        const userMsgId = Date.now().toString();
-        const aiMsgId = (Date.now() + 1).toString();
+        const userMsgId = crypto.randomUUID();
+        const aiMsgId = crypto.randomUUID();
 
         const newUserMsg: Message = {
             id: userMsgId,
@@ -42,32 +42,60 @@ export default function Home() {
                 body: JSON.stringify({ query: query })
             });
 
-            if (!res.ok) throw new Error("Failed to fetch");
+            if (!res.ok) throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
 
             const reader = res.body?.getReader();
             const decoder = new TextDecoder();
             if (!reader) throw new Error("No reader");
 
-            let currentEvent = "";
+            const processLine = (line: string, eventObj: { current: string }): boolean => {
+                if (line.startsWith("event: ")) {
+                    eventObj.current = line.substring(7).trim();
+                } else if (line.startsWith("data: ")) {
+                    const currentData = line.substring(6);
+                    const currentEvent = eventObj.current;
+
+                    if (currentEvent === "metadata" && currentData.trim() !== "") {
+                        try {
+                            const metaJson = JSON.parse(currentData);
+                            const philosophersArray = Array.isArray(metaJson.philosophers) ? metaJson.philosophers : [];
+                            setMessages((prev) =>
+                                prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: philosophersArray } : msg)
+                            );
+                        } catch { console.error("Could not parse metadata event:", currentData) }
+                    } else if (currentEvent === "content") {
+                        // un-escape \\n to real newlines
+                        const char = currentData.replace(/\\n/g, '\n');
+                        setMessages((prev) =>
+                            prev.map(msg => msg.id === aiMsgId ? { ...msg, content: msg.content + char } : msg)
+                        );
+                    } else if (currentEvent === "error") {
+                        console.error("Chat error:", currentData);
+                        setMessages((prev) =>
+                            prev.map(msg => msg.id === aiMsgId ? { ...msg, content: currentData, isStreaming: false } : msg)
+                        );
+                        return true;
+                    }
+                }
+                return false;
+            };
+
+            const eventObj = { current: "" };
             let buffer = "";
 
+            let shouldStop = false;
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
+                    // Flush the internal buffer of the decoder (for incomplete multi-byte chars)
+                    buffer += decoder.decode();
                     // Process any remaining data in the buffer
                     if (buffer) {
                         const lines = buffer.split('\n');
                         for (const line of lines) {
-                            if (line.startsWith("event: ")) {
-                                currentEvent = line.substring(7).trim();
-                            } else if (line.startsWith("data: ")) {
-                                const currentData = line.substring(6);
-                                if (currentEvent === "content") {
-                                    const char = currentData.replace(/\\n/g, '\n');
-                                    setMessages((prev) =>
-                                        prev.map(msg => msg.id === aiMsgId ? { ...msg, content: msg.content + char } : msg)
-                                    );
-                                }
+                            if (processLine(line, eventObj)) {
+                                shouldStop = true;
+                                break;
                             }
                         }
                     }
@@ -81,31 +109,14 @@ export default function Home() {
                 buffer = lines.pop() || "";
 
                 for (const line of lines) {
-                    if (line.startsWith("event: ")) {
-                        currentEvent = line.substring(7).trim();
-                    } else if (line.startsWith("data: ")) {
-                        const currentData = line.substring(6);
-
-                        if (currentEvent === "metadata" && currentData.trim() !== "") {
-                            try {
-                                const metaJson = JSON.parse(currentData);
-                                setMessages((prev) =>
-                                    prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: metaJson.philosophers } : msg)
-                                );
-                            } catch (e) { console.error("Could not parse metadata event:", currentData) }
-                        } else if (currentEvent === "content") {
-                            // un-escape \\n to real newlines
-                            const char = currentData.replace(/\\n/g, '\n');
-                            setMessages((prev) =>
-                                prev.map(msg => msg.id === aiMsgId ? { ...msg, content: msg.content + char } : msg)
-                            );
-                        } else if (currentEvent === "error") {
-                            console.error("Chat error:", currentData);
-                            setMessages((prev) =>
-                                prev.map(msg => msg.id === aiMsgId ? { ...msg, content: currentData, isStreaming: false } : msg)
-                            );
-                        }
+                    if (processLine(line, eventObj)) {
+                        shouldStop = true;
+                        break;
                     }
+                }
+                if (shouldStop) {
+                    await reader.cancel();
+                    break;
                 }
             }
 

@@ -32,10 +32,12 @@ pip install -r requirements.txt
 
 Set up environment variables:
 Create a `.env` file in the `backend` directory based on the `.env.example` structure.
-You will need your `GEMINI_API_KEY`.
+You will need your `GEMINI_API_KEY`, as well as `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` which are required by the backend configuration (`app/core/config.py`).
 ```bash
 # example .env contents
 GEMINI_API_KEY="your-api-key-here"
+SUPABASE_URL="your-supabase-url"
+SUPABASE_SERVICE_KEY="your-supabase-service-key"
 ```
 
 Start the backend server on `http://localhost:8000`:
@@ -73,4 +75,4 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Architecture Highlights
 - Frontend: Next.js 14+ (App Router), TailwindCSS, TypeScript, custom SSE streaming integration.
-- Backend: FastAPI, LangChain, SentenceTransformers embedding, and Supabase integration.
+- Backend: FastAPI, LangChain, HuggingFace embedding, and Supabase integration.

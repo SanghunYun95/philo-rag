@@ -1,17 +1,25 @@
 import json
 import asyncio
+import logging
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
-from app.services.llm import get_english_translation, get_response_stream
+from app.services.llm import get_english_translation, get_response_stream_async
 from app.services.embedding import embedding_service
-from app.services.database import supabase_client
+from app.services.database import get_client
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 class ChatRequest(BaseModel):
     query: str
+
+def _search_documents(query_vector):
+    return get_client().rpc(
+        'match_documents', 
+        {'query_embedding': query_vector, 'match_count': 3}
+    ).execute()
 
 async def generate_chat_events(request: Request, query: str):
     """
@@ -20,28 +28,28 @@ async def generate_chat_events(request: Request, query: str):
     """
     # 1. Translate Korean query to English
     try:
-        english_query = get_english_translation(query)
-    except Exception as e:
+        english_query = await asyncio.to_thread(get_english_translation, query)
+    except Exception:
+        logger.exception("Failed to translate query")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
     
     # 2. Generate vector representation
     try:
-        query_vector = embedding_service.generate_embedding(english_query)
+        query_vector = await asyncio.to_thread(embedding_service.generate_embedding, english_query)
     except Exception:
+        logger.exception("Failed to generate query embedding")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
     
     # 3. Perform hybrid search in Supabase
     # We use the RPC match_documents function defined in schema.sql
     try:
-        response = supabase_client.rpc(
-            'match_documents', 
-            {'query_embedding': query_vector, 'match_count': 3}
-        ).execute()
+        response = await asyncio.to_thread(_search_documents, query_vector)
         documents = response.data
-    except Exception as e:
-        yield {"event": "error", "data": f"Database search failed: {str(e)}"}
+    except Exception:
+        logger.exception("Database search failed")
+        yield {"event": "error", "data": "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."}
         return
         
     if not documents:
@@ -72,9 +80,7 @@ async def generate_chat_events(request: Request, query: str):
     combined_context = "\n\n".join(contexts)
     
     try:
-        llm_stream = get_response_stream(context=combined_context, query=english_query)
-        
-        for chunk in llm_stream:
+        async for chunk in get_response_stream_async(context=combined_context, query=english_query):
             # If client disconnects, stop generating
             if await request.is_disconnected():
                 break
@@ -82,7 +88,8 @@ async def generate_chat_events(request: Request, query: str):
             # Clean up chunk to avoid SSE formatting issues with newlines
             chunk_clean = chunk.replace("\n", "\\n")
             yield {"event": "content", "data": chunk_clean}
-    except Exception as e:
+    except Exception:
+        logger.exception("Failed while streaming LLM response")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
 

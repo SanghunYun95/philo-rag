@@ -1,45 +1,87 @@
-import asyncio
-import os
+
 import sys
 import pytest
 from pathlib import Path
 
-# dynamically add backend dir to path
-backend_dir = Path(__file__).resolve().parent
+# dynamically add backend root dir to path
+backend_dir = Path(__file__).resolve().parents[2]
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.services.llm import get_english_translation, get_response_stream
-from app.core.config import settings
+import os
 
-@pytest.mark.skipif(not settings.GEMINI_API_KEY, reason="GEMINI_API_KEY is not configured")
-def test_translation():
-    print("Testing translation...")
+@pytest.fixture(autouse=True)
+def setup_test_env(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "dummy_test_key")
+    monkeypatch.setenv("SUPABASE_URL", "http://localhost:8000")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "dummy_test_key")
+    
+    # Ensure settings reflect the mocked env vars globally in case they were initialized
     try:
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "GEMINI_API_KEY", "dummy_test_key")
+        monkeypatch.setattr(settings, "SUPABASE_URL", "http://localhost:8000")
+        monkeypatch.setattr(settings, "SUPABASE_SERVICE_KEY", "dummy_test_key")
+    except ImportError:
+        pass
+
+from unittest.mock import patch, MagicMock
+
+def test_translation(setup_test_env):
+    print("Testing translation...")
+    from app.services.llm import get_english_translation
+    with patch("app.services.llm.translation_prompt") as mock_prompt, \
+         patch("app.services.llm.llm") as _mock_llm, \
+         patch("app.services.llm.StrOutputParser") as _mock_parser:
+        
+        mock_chain = MagicMock()
+        mock_chain.invoke.return_value = "Translated Text"
+        mock_chain.__or__.return_value = mock_chain
+        mock_prompt.__or__.return_value = mock_chain
+        
         translated = get_english_translation("미덕이란 무엇인가?")
         print("Translation:", translated)
-        assert translated.strip() != "", "Translation must not be empty"
-    except Exception as e:
-        raise AssertionError(f"Translation error: {str(e)}")
+        assert translated == "Translated Text", "Translation output mocked mismatch"
 
-@pytest.mark.skipif(not settings.GEMINI_API_KEY, reason="GEMINI_API_KEY is not configured")
-def test_streaming():
+def test_streaming(setup_test_env):
     print("Testing streaming...")
-    try:
+    from app.services.llm import get_response_stream
+    with patch("app.services.llm.get_rag_prompt") as mock_prompt, \
+         patch("app.services.llm.llm") as _mock_llm, \
+         patch("app.services.llm.StrOutputParser") as _mock_parser:
+         
+        mock_chain = MagicMock()
+        mock_chain.stream.return_value = ["안녕하세요", " ", "철학자", "입니다."]
+        mock_chain.__or__.return_value = mock_chain
+        mock_prompt.return_value.__or__.return_value = mock_chain
+        
         stream = get_response_stream(context="Virtue is excellence.", query="What is virtue?")
-        chunks_received = 0
-        for chunk in stream:
-            print(chunk, end="", flush=True)
-            chunks_received += 1
-        print("\nStream finished")
-        assert chunks_received > 0, "No chunks received from streaming API"
-    except Exception as e:
-        raise AssertionError(f"Stream error: {str(e)}")
+        results = list(stream)
+        assert results == ["안녕하세요", " ", "철학자", "입니다."], "Stream chunks mocked mismatch"
+
+@pytest.mark.asyncio
+async def test_streaming_async(setup_test_env):
+    print("Testing streaming async...")
+    from app.services.llm import get_response_stream_async
+    with patch("app.services.llm.get_rag_prompt") as mock_prompt, \
+         patch("app.services.llm.llm") as _mock_llm, \
+         patch("app.services.llm.StrOutputParser") as _mock_parser:
+         
+        mock_chain = MagicMock()
+        async def mock_astream(*_args, **_kwargs):
+            for chunk in ["안녕하세요", " ", "철학자", "입니다."]:
+                yield chunk
+        mock_chain.astream = mock_astream
+        mock_chain.__or__.return_value = mock_chain
+        mock_prompt.return_value.__or__.return_value = mock_chain
+        
+        stream = get_response_stream_async(context="Virtue is excellence.", query="What is virtue?")
+        results = [chunk async for chunk in stream]
+        assert results == ["안녕하세요", " ", "철학자", "입니다."], "Async stream chunks mocked mismatch"
 
 # For manual execution
-async def run_manual_test():
+if __name__ == "__main__":
+    import asyncio
     test_translation()
     test_streaming()
-
-if __name__ == "__main__":
-    asyncio.run(run_manual_test())
+    asyncio.run(test_streaming_async())

@@ -1,7 +1,7 @@
 "use client";
 
 import { Paperclip, Mic, ArrowUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface FloatingInputProps {
     onSendMessage: (query: string) => void;
@@ -10,6 +10,8 @@ interface FloatingInputProps {
 
 export function FloatingInput({ onSendMessage, isSubmitting }: FloatingInputProps) {
     const [inputValue, setInputValue] = useState("");
+    const isComposing = useRef(false);
+    const lastCompositionEndAt = useRef(0);
 
     const handleSend = () => {
         if (!inputValue.trim() || isSubmitting) return;
@@ -40,7 +42,14 @@ export function FloatingInput({ onSendMessage, isSubmitting }: FloatingInputProp
                         style={{ minHeight: "24px" }}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
+                        onCompositionStart={() => { isComposing.current = true; }}
+                        onCompositionEnd={() => {
+                            isComposing.current = false;
+                            lastCompositionEndAt.current = Date.now();
+                        }}
                         onKeyDown={(e) => {
+                            if (isComposing.current || Date.now() - lastCompositionEndAt.current < 50) return;
+
                             if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSend();
@@ -73,6 +82,6 @@ export function FloatingInput({ onSendMessage, isSubmitting }: FloatingInputProp
                     PhiloRAG는 실수를 할 수 있습니다. 중요한 철학적 출처는 문헌을 직접 확인하세요.
                 </p>
             </div>
-        </div>
+        </div >
     );
 }

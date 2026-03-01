@@ -4,6 +4,9 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
 
+if not settings.GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY must be configured")
+
 # Configure Gemini API natively (optional, if native SDK features are needed)
 genai.configure(api_key=settings.GEMINI_API_KEY)
 
@@ -11,9 +14,9 @@ genai.configure(api_key=settings.GEMINI_API_KEY)
 # We use gemini-2.5-flash for faster and highly capable inference
 llm = ChatGoogleGenerativeAI(
     model="gemini-2.5-flash", 
-    google_api_key=settings.GEMINI_API_KEY or "dummy_key_for_testing",
+    google_api_key=settings.GEMINI_API_KEY,
     temperature=0.7,
-    max_retries=0
+    max_retries=2
 )
 
 translation_prompt = PromptTemplate.from_template(
@@ -58,3 +61,12 @@ def get_response_stream(context: str, query: str):
     prompt = get_rag_prompt()
     chain = prompt | llm | StrOutputParser()
     return chain.stream({"context": context, "query": query})
+
+async def get_response_stream_async(context: str, query: str):
+    """
+    Returns an async stream of strings from the LLM.
+    """
+    prompt = get_rag_prompt()
+    chain = prompt | llm | StrOutputParser()
+    async for chunk in chain.astream({"context": context, "query": query}):
+        yield chunk

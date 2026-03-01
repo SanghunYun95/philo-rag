@@ -1,14 +1,15 @@
-import { BrainCircuit, CheckCircle, Circle } from "lucide-react";
+import { BrainCircuit, CheckCircle } from "lucide-react";
 import { DocumentMetadata } from "../../types/chat";
 
 interface Props {
     metadata: DocumentMetadata[];
+    onPhilosopherClick?: (scholar: string) => void;
 }
 
-export function ActivePhilosophers({ metadata }: Props) {
-    // extract unique philosophers
+export function ActivePhilosophers({ metadata, onPhilosopherClick }: Props) {
     const uniquePhilosophers = Array.from(new Set(metadata.map(m => m.scholar)))
-        .map(scholar => metadata.find(m => m.scholar === scholar)!);
+        .map(scholar => metadata.find(m => m.scholar === scholar))
+        .filter((m): m is DocumentMetadata => m !== undefined);
 
     return (
         <div>
@@ -20,10 +21,11 @@ export function ActivePhilosophers({ metadata }: Props) {
                 <p className="text-white/30 text-xs italic">현재 참조 중인 철학자가 없습니다.</p>
             ) : (
                 <div className="space-y-3">
-                    {uniquePhilosophers.map((meta, i) => (
+                    {uniquePhilosophers.map((meta) => (
                         <button
                             key={meta.scholar}
                             type="button"
+                            onClick={() => onPhilosopherClick?.(meta.scholar)}
                             className="w-full text-left group relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 hover:border-primary/50 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                         >
                             <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>

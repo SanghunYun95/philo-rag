@@ -7,9 +7,9 @@ interface Props {
 }
 
 export function ContextSources({ metadata }: Props) {
-    // extract unique books
     const uniqueBooks = Array.from(new Set(metadata.map(m => m.book_info.title)))
-        .map(title => metadata.find(m => m.book_info.title === title)!);
+        .map(title => metadata.find(m => m.book_info.title === title))
+        .filter((m): m is DocumentMetadata => m !== undefined);
 
     return (
         <div>
@@ -21,11 +21,10 @@ export function ContextSources({ metadata }: Props) {
                 <p className="text-white/30 text-xs italic">답변에 사용된 참고 문헌이 없습니다.</p>
             ) : (
                 <ul className="space-y-4">
-                    {uniqueBooks.map((meta, i) => (
-                        <li key={i} className="-m-2">
-                            <button
-                                type="button"
-                                className="w-full text-left group flex gap-4 cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                    {uniqueBooks.map((meta) => (
+                        <li key={meta.book_info.title} className="-m-2">
+                            <div
+                                className="w-full text-left group flex gap-4 p-2 rounded-xl transition-colors"
                             >
                                 <div className="h-16 w-12 shrink-0 bg-white/5 rounded border border-white/10 shadow-sm relative overflow-hidden flex items-center justify-center">
                                     {meta.book_info.cover_url && !meta.book_info.cover_url.includes("dummy") ? (
@@ -42,7 +41,7 @@ export function ContextSources({ metadata }: Props) {
                                         <span className="text-[10px] text-white/30 uppercase tracking-widest">높은 관련도</span>
                                     </div>
                                 </div>
-                            </button>
+                            </div>
                         </li>
                     ))}
                 </ul>
