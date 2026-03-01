@@ -9,15 +9,27 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 import os
-os.environ["GEMINI_API_KEY"] = "dummy_test_key"
-os.environ["SUPABASE_URL"] = "http://localhost:8000"
-os.environ["SUPABASE_SERVICE_KEY"] = "dummy_test_key"
+
+@pytest.fixture(autouse=True)
+def setup_test_env(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "dummy_test_key")
+    monkeypatch.setenv("SUPABASE_URL", "http://localhost:8000")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "dummy_test_key")
+    
+    # Ensure settings reflect the mocked env vars globally in case they were initialized
+    try:
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "GEMINI_API_KEY", "dummy_test_key")
+        monkeypatch.setattr(settings, "SUPABASE_URL", "http://localhost:8000")
+        monkeypatch.setattr(settings, "SUPABASE_SERVICE_KEY", "dummy_test_key")
+    except ImportError:
+        pass
 
 from unittest.mock import patch, MagicMock
-from app.services.llm import get_english_translation, get_response_stream, get_response_stream_async
 
-def test_translation():
+def test_translation(setup_test_env):
     print("Testing translation...")
+    from app.services.llm import get_english_translation
     with patch("app.services.llm.translation_prompt") as mock_prompt, \
          patch("app.services.llm.llm") as _mock_llm, \
          patch("app.services.llm.StrOutputParser") as _mock_parser:
@@ -31,8 +43,9 @@ def test_translation():
         print("Translation:", translated)
         assert translated == "Translated Text", "Translation output mocked mismatch"
 
-def test_streaming():
+def test_streaming(setup_test_env):
     print("Testing streaming...")
+    from app.services.llm import get_response_stream
     with patch("app.services.llm.get_rag_prompt") as mock_prompt, \
          patch("app.services.llm.llm") as _mock_llm, \
          patch("app.services.llm.StrOutputParser") as _mock_parser:
@@ -47,8 +60,9 @@ def test_streaming():
         assert results == ["안녕하세요", " ", "철학자", "입니다."], "Stream chunks mocked mismatch"
 
 @pytest.mark.asyncio
-async def test_streaming_async():
+async def test_streaming_async(setup_test_env):
     print("Testing streaming async...")
+    from app.services.llm import get_response_stream_async
     with patch("app.services.llm.get_rag_prompt") as mock_prompt, \
          patch("app.services.llm.llm") as _mock_llm, \
          patch("app.services.llm.StrOutputParser") as _mock_parser:

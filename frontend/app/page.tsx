@@ -48,7 +48,7 @@ export default function Home() {
             const decoder = new TextDecoder();
             if (!reader) throw new Error("No reader");
 
-            const processLine = (line: string, eventObj: { current: string }) => {
+            const processLine = (line: string, eventObj: { current: string }): boolean => {
                 if (line.startsWith("event: ")) {
                     eventObj.current = line.substring(7).trim();
                 } else if (line.startsWith("data: ")) {
@@ -74,13 +74,16 @@ export default function Home() {
                         setMessages((prev) =>
                             prev.map(msg => msg.id === aiMsgId ? { ...msg, content: currentData, isStreaming: false } : msg)
                         );
+                        return true;
                     }
                 }
+                return false;
             };
 
             const eventObj = { current: "" };
             let buffer = "";
 
+            let shouldStop = false;
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
@@ -90,7 +93,10 @@ export default function Home() {
                     if (buffer) {
                         const lines = buffer.split('\n');
                         for (const line of lines) {
-                            processLine(line, eventObj);
+                            if (processLine(line, eventObj)) {
+                                shouldStop = true;
+                                break;
+                            }
                         }
                     }
                     break;
@@ -103,7 +109,14 @@ export default function Home() {
                 buffer = lines.pop() || "";
 
                 for (const line of lines) {
-                    processLine(line, eventObj);
+                    if (processLine(line, eventObj)) {
+                        shouldStop = true;
+                        break;
+                    }
+                }
+                if (shouldStop) {
+                    await reader.cancel();
+                    break;
                 }
             }
 
