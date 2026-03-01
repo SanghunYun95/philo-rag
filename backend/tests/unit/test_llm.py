@@ -31,9 +31,11 @@ def test_translation(setup_test_env):
     print("Testing translation...")
     from app.services.llm import get_english_translation
     with patch("app.services.llm.translation_prompt") as mock_prompt, \
-         patch("app.services.llm.llm") as _mock_llm, \
+         patch("app.services.llm.get_llm") as mock_get_llm, \
          patch("app.services.llm.StrOutputParser") as _mock_parser:
         
+        _mock_llm = MagicMock()
+        mock_get_llm.return_value = _mock_llm
         mock_chain = MagicMock()
         mock_chain.invoke.return_value = "Translated Text"
         mock_chain.__or__.return_value = mock_chain
@@ -47,9 +49,11 @@ def test_streaming(setup_test_env):
     print("Testing streaming...")
     from app.services.llm import get_response_stream
     with patch("app.services.llm.get_rag_prompt") as mock_prompt, \
-         patch("app.services.llm.llm") as _mock_llm, \
+         patch("app.services.llm.get_llm") as mock_get_llm, \
          patch("app.services.llm.StrOutputParser") as _mock_parser:
          
+        _mock_llm = MagicMock()
+        mock_get_llm.return_value = _mock_llm
         mock_chain = MagicMock()
         mock_chain.stream.return_value = ["안녕하세요", " ", "철학자", "입니다."]
         mock_chain.__or__.return_value = mock_chain
@@ -64,9 +68,11 @@ async def test_streaming_async(setup_test_env):
     print("Testing streaming async...")
     from app.services.llm import get_response_stream_async
     with patch("app.services.llm.get_rag_prompt") as mock_prompt, \
-         patch("app.services.llm.llm") as _mock_llm, \
+         patch("app.services.llm.get_llm") as mock_get_llm, \
          patch("app.services.llm.StrOutputParser") as _mock_parser:
          
+        _mock_llm = MagicMock()
+        mock_get_llm.return_value = _mock_llm
         mock_chain = MagicMock()
         async def mock_astream(*_args, **_kwargs):
             for chunk in ["안녕하세요", " ", "철학자", "입니다."]:

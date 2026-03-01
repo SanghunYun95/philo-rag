@@ -11,23 +11,26 @@ def test_health_check():
     assert response.json() == {"status": "healthy"}
 
 @patch("app.api.routes.chat.embedding_service.generate_embedding")
-@patch("app.api.routes.chat.supabase_client.rpc")
+@patch("app.api.routes.chat._search_documents")
 @patch("app.api.routes.chat.get_english_translation")
-@patch("app.api.routes.chat.get_response_stream")
-def test_chat_endpoint_success(mock_stream, mock_translate, mock_rpc, mock_embed):
+@patch("app.api.routes.chat.get_response_stream_async")
+def test_chat_endpoint_success(mock_stream, mock_translate, mock_search, mock_embed):
     # Setup mocks
     mock_translate.return_value = "What is life?"
     mock_embed.return_value = [0.1] * 384
     
-    # Mock supabase response
-    mock_execute = MagicMock()
-    mock_execute.execute.return_value.data = [
+    # Mock _search_documents response
+    mock_response = MagicMock()
+    mock_response.data = [
         {"content": "Life is suffering", "metadata": {"author": "Schopenhauer"}}
     ]
-    mock_rpc.return_value = mock_execute
+    mock_search.return_value = mock_response
     
     # Mock LLM stream generator
-    mock_stream.return_value = (chunk for chunk in ["인생은", " ", "고통입니다."])
+    async def mock_async_generator(*args, **kwargs):
+        for chunk in ["인생은", " ", "고통입니다."]:
+            yield chunk
+    mock_stream.return_value = mock_async_generator()
     
     # Call the actual endpoint with Fastapi test client
     # Since it's SSE, we stream the response

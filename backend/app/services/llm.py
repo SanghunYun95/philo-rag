@@ -4,20 +4,27 @@ from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
 
-if not settings.GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY must be configured")
+# Models will be instantiated lazily or during function call
+_llm = None
 
-# Configure Gemini API natively (optional, if native SDK features are needed)
-genai.configure(api_key=settings.GEMINI_API_KEY)
+def get_llm():
+    global _llm
+    if not settings.GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY must be configured")
+        
+    if _llm is None:
+        # Configure Gemini API natively (optional, if native SDK features are needed)
+        genai.configure(api_key=settings.GEMINI_API_KEY)
+        
+        # Configure LangChain model
+        _llm = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash", 
+            google_api_key=settings.GEMINI_API_KEY,
+            temperature=0.7,
+            max_retries=2
+        )
+    return _llm
 
-# Configure LangChain model
-# We use gemini-2.5-flash for faster and highly capable inference
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash", 
-    google_api_key=settings.GEMINI_API_KEY,
-    temperature=0.7,
-    max_retries=2
-)
 
 translation_prompt = PromptTemplate.from_template(
     """Translate the following user query from Korean to English.
@@ -31,7 +38,7 @@ def get_english_translation(korean_query: str) -> str:
     """
     Translates a Korean query to English using Gemini via LangChain.
     """
-    chain = translation_prompt | llm | StrOutputParser()
+    chain = translation_prompt | get_llm() | StrOutputParser()
     return chain.invoke({"query": korean_query})
 
 def get_rag_prompt() -> PromptTemplate:
@@ -62,7 +69,7 @@ def get_response_stream(context: str, query: str, history: str = ""):
     Returns a stream of strings from the LLM.
     """
     prompt = get_rag_prompt()
-    chain = prompt | llm | StrOutputParser()
+    chain = prompt | get_llm() | StrOutputParser()
     return chain.stream({"context": context, "chat_history": history, "query": query})
 
 async def get_response_stream_async(context: str, query: str, history: str = ""):
@@ -70,6 +77,6 @@ async def get_response_stream_async(context: str, query: str, history: str = "")
     Returns an async stream of strings from the LLM.
     """
     prompt = get_rag_prompt()
-    chain = prompt | llm | StrOutputParser()
+    chain = prompt | get_llm() | StrOutputParser()
     async for chunk in chain.astream({"context": context, "chat_history": history, "query": query}):
         yield chunk

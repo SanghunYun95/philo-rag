@@ -3,7 +3,7 @@ import asyncio
 import logging
 from typing import List, Dict, Optional
 from fastapi import APIRouter, Request, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
 from app.services.llm import get_english_translation, get_response_stream_async
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class ChatRequest(BaseModel):
     query: str
-    history: Optional[List[Dict[str, str]]] = []
+    history: List[Dict[str, str]] = Field(default_factory=list)
 
 def _search_documents(query_vector):
     return get_client().rpc(
@@ -82,12 +82,19 @@ async def generate_chat_events(request: Request, query: str, history: List[Dict[
     # 6. Emit Event 2: content (Text chunk streaming via LLM)
     combined_context = "\n\n".join(contexts)
     
-    # Build history string natively to pass as context
-    formatted_history = ""
-    if history:
-        for msg in history:
-            role_name = "User" if msg.get("role") == "user" else "Agent (PhiloRAG)"
-            formatted_history += f"{role_name}: {msg.get('content')}\n\n"
+    MAX_HISTORY_MESSAGES = 20
+    MAX_HISTORY_CHARS = 1000
+    history_tail = (history or [])[-MAX_HISTORY_MESSAGES:]
+    formatted_parts: List[str] = []
+
+    for msg in history_tail:
+        role_name = "User" if msg.get("role") == "user" else "Agent (PhiloRAG)"
+        content = (msg.get("content") or "").strip()
+        if not content:
+            continue
+        formatted_parts.append(f"{role_name}: {content[:MAX_HISTORY_CHARS]}")
+
+    formatted_history = "\n\n".join(formatted_parts)
             
     try:
         async for chunk in get_response_stream_async(context=combined_context, query=english_query, history=formatted_history):

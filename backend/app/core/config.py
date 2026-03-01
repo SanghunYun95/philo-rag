@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     SUPABASE_SERVICE_KEY: str = "" # Use Service Role Key for backend operations
     
     model_config = SettingsConfigDict(
-        env_file=str(Path(__file__).resolve().parents[3] / ".env"), 
+        env_file=str(Path(__file__).resolve().parents[2] / ".env"), 
         env_file_encoding="utf-8"
     )
 

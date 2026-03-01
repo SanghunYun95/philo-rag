@@ -26,7 +26,7 @@ export function Sidebar({ messages = [] }: SidebarProps) {
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                <ActivePhilosophers metadata={currentMetadata} onPhilosopherClick={(scholar) => console.log('Philosopher clicked:', scholar)} />
+                <ActivePhilosophers metadata={currentMetadata} onPhilosopherClick={() => { /* TODO: Implement philosopher filter */ }} />
                 <ContextSources metadata={currentMetadata} />
             </div>
 
@@ -44,13 +44,13 @@ export function Sidebar({ messages = [] }: SidebarProps) {
             {/* Bottom Controls */}
             <div className="p-4 border-t border-white/5 bg-black/20">
                 <div className="flex items-center justify-around">
-                    <button type="button" aria-label="설정" aria-disabled="true" disabled tabIndex={-1} className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="설정 (준비 중)">
+                    <button type="button" aria-label="설정" disabled className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="설정 (준비 중)">
                         <Settings className="w-5 h-5" />
                     </button>
-                    <button type="button" aria-label="대화 기록" aria-disabled="true" disabled tabIndex={-1} className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="대화 기록 (준비 중)">
+                    <button type="button" aria-label="대화 기록" disabled className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="대화 기록 (준비 중)">
                         <History className="w-5 h-5" />
                     </button>
-                    <button type="button" aria-label="프로필" aria-disabled="true" disabled tabIndex={-1} className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="프로필 (준비 중)">
+                    <button type="button" aria-label="프로필" disabled className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="프로필 (준비 중)">
                         <User className="w-5 h-5" />
                     </button>
                 </div>

@@ -7,8 +7,8 @@ interface Props {
 }
 
 export function ContextSources({ metadata }: Props) {
-    const uniqueBooks = Array.from(new Set(metadata.map(m => m.book_info.title)))
-        .map(title => metadata.find(m => m.book_info.title === title))
+    const uniqueBooks = Array.from(new Set(metadata.map(m => m.id)))
+        .map(id => metadata.find(m => m.id === id))
         .filter((m): m is DocumentMetadata => m !== undefined);
 
     return (
@@ -22,7 +22,7 @@ export function ContextSources({ metadata }: Props) {
             ) : (
                 <ul className="space-y-4">
                     {uniqueBooks.map((meta) => (
-                        <li key={meta.book_info.title} className="-m-2">
+                        <li key={meta.id} className="-m-2">
                             <div
                                 className="w-full text-left group flex gap-4 p-2 rounded-xl transition-colors"
                             >

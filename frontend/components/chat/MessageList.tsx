@@ -71,11 +71,12 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                                 </div>
 
                                 {/* Citation Cards if metadata exists */}
-                                {msg.metadata && msg.metadata.length > 0 && Array.from(new Set(msg.metadata.map(m => m.book_info.title))).map((title, idx) => {
-                                    const meta = msg.metadata?.find(m => m.book_info.title === title);
+                                {msg.metadata && msg.metadata.length > 0 && Array.from(new Set(msg.metadata.map(m => m.id))).map((id) => {
+                                    const meta = msg.metadata?.find(m => m.id === id);
                                     if (!meta) return null;
+                                    const title = meta.book_info.title;
                                     return (
-                                        <div key={idx} className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card">
+                                        <div key={meta.id} onClick={() => onOpenCitation?.(meta)} className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card">
                                             <div className="h-16 w-12 shrink-0 bg-white/10 flex items-center justify-center rounded shadow-inner overflow-hidden">
                                                 {meta.book_info.cover_url && !meta.book_info.cover_url.includes("dummy") ? (
                                                     <>
@@ -96,7 +97,7 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                                                 <button
                                                     type="button"
                                                     aria-label={`${title} 참고 문헌 열기`}
-                                                    onClick={() => onOpenCitation(meta)}
+                                                    onClick={(e) => { e.stopPropagation(); onOpenCitation(meta); }}
                                                     className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 group-hover/card:bg-primary group-hover/card:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all self-center"
                                                 >
                                                     <SquareArrowOutUpRight className="w-4 h-4" />
