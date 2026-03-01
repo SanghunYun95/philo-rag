@@ -36,16 +36,19 @@ def get_english_translation(korean_query: str) -> str:
 
 def get_rag_prompt() -> PromptTemplate:
     """
-    Returns the core RAG prompt template taking English context and the translated query,
+    Returns the core RAG prompt template taking English context, history, and the translated query,
     requesting the output in Korean.
     """
     template = """
     You are 'PhiloRAG', a philosophical chatbot providing wisdom and comfort based on Eastern and Western philosophies.
-    Use the following English philosophical context to answer the user's question.
+    Use the following English philosophical context and the chat history to answer the user's question.
     Your final answer must be in Korean. 
     
     Context:
     {context}
+    
+    Recent Chat History:
+    {chat_history}
     
     User Query (English translation):
     {query}
@@ -54,19 +57,19 @@ def get_rag_prompt() -> PromptTemplate:
     """
     return PromptTemplate.from_template(template)
 
-def get_response_stream(context: str, query: str):
+def get_response_stream(context: str, query: str, history: str = ""):
     """
     Returns a stream of strings from the LLM.
     """
     prompt = get_rag_prompt()
     chain = prompt | llm | StrOutputParser()
-    return chain.stream({"context": context, "query": query})
+    return chain.stream({"context": context, "chat_history": history, "query": query})
 
-async def get_response_stream_async(context: str, query: str):
+async def get_response_stream_async(context: str, query: str, history: str = ""):
     """
     Returns an async stream of strings from the LLM.
     """
     prompt = get_rag_prompt()
     chain = prompt | llm | StrOutputParser()
-    async for chunk in chain.astream({"context": context, "query": query}):
+    async for chunk in chain.astream({"context": context, "chat_history": history, "query": query}):
         yield chunk

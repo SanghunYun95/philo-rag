@@ -12,3 +12,4 @@ python-dotenv
 langchain-community==0.4.1
 sentence-transformers>=2.2.0,<3.0.0
 pytest-asyncio>=0.23.0
+slowapi>=0.1.9

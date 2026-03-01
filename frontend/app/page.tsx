@@ -35,12 +35,24 @@ export default function Home() {
         setIsSubmitting(true);
 
         try {
+            const historyToSend = messages.slice(-10).map(msg => ({
+                role: msg.role,
+                content: msg.content
+            }));
+
             const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ query: query })
+                body: JSON.stringify({ query: query, history: historyToSend })
             });
+
+            if (res.status === 429) {
+                setMessages((prev) =>
+                    prev.map(msg => msg.id === aiMsgId ? { ...msg, isStreaming: false, content: "입력량이 너무 많습니다. 잠시 후 1분 뒤에 다시 철학자와 대화를 시도해 주세요." } : msg)
+                );
+                return;
+            }
 
             if (!res.ok) throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
 
