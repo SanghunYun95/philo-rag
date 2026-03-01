@@ -16,11 +16,12 @@ interface ChatMainProps {
 export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat }: ChatMainProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-    const startTimeRef = useRef<string>("");
+    const [startTime, setStartTime] = useState<string>("");
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        startTimeRef.current = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStartTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         setMounted(true);
     }, []);
 
@@ -43,7 +44,7 @@ export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat }:
             <div className="flex-none p-6 flex justify-between items-start bg-[#0f0f11] border-b border-white/5 z-30">
                 <div>
                     <h2 className="font-display text-3xl text-white/90">미덕에 관한 대화</h2>
-                    <p className="text-sm text-white/40 mt-1">세션 시작: {mounted ? startTimeRef.current : ""}</p>
+                    <p className="text-sm text-white/40 mt-1">세션 시작: {mounted ? startTime : ""}</p>
                 </div>
                 <div className="flex gap-2">
                     <button onClick={() => alert("준비 중입니다.")} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">

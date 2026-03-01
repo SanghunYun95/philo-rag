@@ -4,7 +4,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const newsreader = Newsreader({ subsets: ["latin"], variable: "--font-newsreader", display: "swap", style: ['normal', 'italic'] });
-const notoSansKr = Noto_Sans_KR({ subsets: ["latin"], preload: false, variable: "--font-noto-sans-kr", display: "swap" });
+const notoSansKr = Noto_Sans_KR({ subsets: ["latin"], weight: ["100", "400", "700", "900"], preload: false, variable: "--font-noto-sans-kr", display: "swap" });
 
 export const metadata: Metadata = {
     title: "PhiloRAG",
@@ -20,6 +20,7 @@ export default function RootLayout({
         <html lang="ko" className="dark">
             <body
                 className={`${inter.variable} ${newsreader.variable} ${notoSansKr.variable} bg-[#0f0f11] min-h-screen text-slate-100 font-sans antialiased`}
+
             >
                 {children}
             </body>

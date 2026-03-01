@@ -1,4 +1,5 @@
-import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw, ChevronRight } from "lucide-react";
+/* eslint-disable @next/next/no-img-element */
+import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw } from "lucide-react";
 import { Message } from "../../types/chat";
 
 interface Props {
@@ -73,7 +74,6 @@ export function MessageList({ messages }: Props) {
                                 {msg.metadata && msg.metadata.length > 0 && Array.from(new Set(msg.metadata.map(m => m.book_info.title))).map((title, idx) => {
                                     const meta = msg.metadata?.find(m => m.book_info.title === title);
                                     if (!meta) return null;
-
                                     return (
                                         <div key={idx} className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card">
                                             <div className="h-16 w-12 shrink-0 bg-white/10 flex items-center justify-center rounded shadow-inner overflow-hidden">

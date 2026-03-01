@@ -13,11 +13,16 @@ def get_supabase_client() -> Client:
         raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured")
     return create_client(supabase_url, supabase_key)
 
+import threading
+
+_client_lock = threading.Lock()
 # Lazy initialization for Supabase client
 _supabase_client: Client | None = None
 
 def get_client() -> Client:
     global _supabase_client
     if _supabase_client is None:
-        _supabase_client = get_supabase_client()
+        with _client_lock:
+            if _supabase_client is None:
+                _supabase_client = get_supabase_client()
     return _supabase_client

@@ -53,21 +53,22 @@ export default function Home() {
                     eventObj.current = line.substring(7).trim();
                 } else if (line.startsWith("data: ")) {
                     const currentData = line.substring(6);
+                    const currentEvent = eventObj.current;
 
-                    if (eventObj.current === "metadata" && currentData.trim() !== "") {
+                    if (currentEvent === "metadata" && currentData.trim() !== "") {
                         try {
                             const metaJson = JSON.parse(currentData);
                             setMessages((prev) =>
                                 prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: metaJson.philosophers } : msg)
                             );
-                        } catch (e) { console.error("Could not parse metadata event:", currentData) }
-                    } else if (eventObj.current === "content") {
+                        } catch { console.error("Could not parse metadata event:", currentData) }
+                    } else if (currentEvent === "content") {
                         // un-escape \\n to real newlines
                         const char = currentData.replace(/\\n/g, '\n');
                         setMessages((prev) =>
                             prev.map(msg => msg.id === aiMsgId ? { ...msg, content: msg.content + char } : msg)
                         );
-                    } else if (eventObj.current === "error") {
+                    } else if (currentEvent === "error") {
                         console.error("Chat error:", currentData);
                         setMessages((prev) =>
                             prev.map(msg => msg.id === aiMsgId ? { ...msg, content: currentData, isStreaming: false } : msg)
@@ -76,7 +77,7 @@ export default function Home() {
                 }
             };
 
-            let eventObj = { current: "" };
+            const eventObj = { current: "" };
             let buffer = "";
 
             while (true) {

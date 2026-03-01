@@ -15,6 +15,12 @@ logger = logging.getLogger(__name__)
 class ChatRequest(BaseModel):
     query: str
 
+def _search_documents(query_vector):
+    return get_client().rpc(
+        'match_documents', 
+        {'query_embedding': query_vector, 'match_count': 3}
+    ).execute()
+
 async def generate_chat_events(request: Request, query: str):
     """
     Generator function that streams SSE events.
@@ -39,12 +45,7 @@ async def generate_chat_events(request: Request, query: str):
     # 3. Perform hybrid search in Supabase
     # We use the RPC match_documents function defined in schema.sql
     try:
-        response = await asyncio.to_thread(
-            lambda: get_client().rpc(
-                'match_documents', 
-                {'query_embedding': query_vector, 'match_count': 3}
-            ).execute()
-        )
+        response = await asyncio.to_thread(_search_documents, query_vector)
         documents = response.data
     except Exception:
         logger.exception("Database search failed")

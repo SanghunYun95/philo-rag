@@ -75,4 +75,4 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Architecture Highlights
 - Frontend: Next.js 14+ (App Router), TailwindCSS, TypeScript, custom SSE streaming integration.
-- Backend: FastAPI, LangChain, SentenceTransformers embedding, and Supabase integration.
+- Backend: FastAPI, LangChain, HuggingFace embedding, and Supabase integration.

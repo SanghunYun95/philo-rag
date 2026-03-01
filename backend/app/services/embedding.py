@@ -4,6 +4,7 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 
 logger = logging.getLogger(__name__)
 
+
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
 class EmbeddingService:

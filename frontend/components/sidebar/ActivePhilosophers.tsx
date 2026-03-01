@@ -21,7 +21,7 @@ export function ActivePhilosophers({ metadata, onPhilosopherClick }: Props) {
                 <p className="text-white/30 text-xs italic">현재 참조 중인 철학자가 없습니다.</p>
             ) : (
                 <div className="space-y-3">
-                    {uniquePhilosophers.map((meta, i) => (
+                    {uniquePhilosophers.map((meta) => (
                         <button
                             key={meta.scholar}
                             type="button"
