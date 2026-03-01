@@ -42,7 +42,7 @@ export default function Home() {
                 body: JSON.stringify({ query: query })
             });
 
-            if (!res.ok) throw new Error("Failed to fetch");
+            if (!res.ok) throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
 
             const reader = res.body?.getReader();
             const decoder = new TextDecoder();

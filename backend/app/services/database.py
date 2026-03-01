@@ -2,7 +2,9 @@ import threading
 from supabase import create_client, Client
 from app.core.config import settings
 
-def get_supabase_client() -> Client:
+SUPABASE_CONFIG_ERROR = "SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured"
+
+def _get_supabase_client() -> Client:
     """
     Returns a configured Supabase client using the URL and Service Key.
     The Service Key is used to bypass RLS for administrative backend tasks 
@@ -11,7 +13,7 @@ def get_supabase_client() -> Client:
     supabase_url = settings.SUPABASE_URL
     supabase_key = settings.SUPABASE_SERVICE_KEY
     if not supabase_url or not supabase_key:
-        raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured")
+        raise RuntimeError(SUPABASE_CONFIG_ERROR)
     return create_client(supabase_url, supabase_key)
 
 
@@ -24,5 +26,5 @@ def get_client() -> Client:
     if _supabase_client is None:
         with _client_lock:
             if _supabase_client is None:
-                _supabase_client = get_supabase_client()
+                _supabase_client = _get_supabase_client()
     return _supabase_client

@@ -54,7 +54,7 @@ async def test_streaming_async():
          patch("app.services.llm.StrOutputParser") as _mock_parser:
          
         mock_chain = MagicMock()
-        async def mock_astream(*args, **kwargs):
+        async def mock_astream(*_args, **_kwargs):
             for chunk in ["안녕하세요", " ", "철학자", "입니다."]:
                 yield chunk
         mock_chain.astream = mock_astream
