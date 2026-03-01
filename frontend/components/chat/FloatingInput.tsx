@@ -1,7 +1,7 @@
 "use client";
 
 import { Paperclip, Mic, ArrowUp } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface FloatingInputProps {
     onSendMessage: (query: string) => void;
@@ -10,6 +10,7 @@ interface FloatingInputProps {
 
 export function FloatingInput({ onSendMessage, isSubmitting }: FloatingInputProps) {
     const [inputValue, setInputValue] = useState("");
+    const isComposing = useRef(false);
 
     const handleSend = () => {
         if (!inputValue.trim() || isSubmitting) return;
@@ -40,10 +41,14 @@ export function FloatingInput({ onSendMessage, isSubmitting }: FloatingInputProp
                         style={{ minHeight: "24px" }}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
+                        onCompositionStart={() => isComposing.current = true}
+                        onCompositionEnd={() => isComposing.current = false}
                         onKeyDown={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
-                                handleSend();
+                                if (!isComposing.current) {
+                                    handleSend();
+                                }
                             }
                         }}
                     ></textarea>

@@ -1,4 +1,4 @@
-import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw, ChevronRight, User } from "lucide-react";
+import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw, ChevronRight } from "lucide-react";
 import { Message } from "../../types/chat";
 
 interface Props {
@@ -71,7 +71,9 @@ export function MessageList({ messages }: Props) {
 
                                 {/* Citation Cards if metadata exists */}
                                 {msg.metadata && msg.metadata.length > 0 && Array.from(new Set(msg.metadata.map(m => m.book_info.title))).map((title, idx) => {
-                                    const meta = msg.metadata!.find(m => m.book_info.title === title)!;
+                                    const meta = msg.metadata?.find(m => m.book_info.title === title);
+                                    if (!meta) return null;
+
                                     return (
                                         <div key={idx} className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card">
                                             <div className="h-16 w-12 shrink-0 bg-white/10 flex items-center justify-center rounded shadow-inner overflow-hidden">
@@ -90,6 +92,10 @@ export function MessageList({ messages }: Props) {
                                             <button
                                                 type="button"
                                                 aria-label={`${title} 참고 문헌 열기`}
+                                                onClick={() => {
+                                                    // TODO: Implement actual URL opening or expanding logic
+                                                    console.log("Citation clicked:", meta)
+                                                }}
                                                 className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 group-hover/card:bg-primary group-hover/card:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all self-center"
                                             >
                                                 <SquareArrowOutUpRight className="w-4 h-4" />
