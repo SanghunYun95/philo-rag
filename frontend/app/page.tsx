@@ -58,8 +58,9 @@ export default function Home() {
                     if (currentEvent === "metadata" && currentData.trim() !== "") {
                         try {
                             const metaJson = JSON.parse(currentData);
+                            const philosophersArray = Array.isArray(metaJson.philosophers) ? metaJson.philosophers : [];
                             setMessages((prev) =>
-                                prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: metaJson.philosophers } : msg)
+                                prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: philosophersArray } : msg)
                             );
                         } catch { console.error("Could not parse metadata event:", currentData) }
                     } else if (currentEvent === "content") {
@@ -83,6 +84,8 @@ export default function Home() {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) {
+                    // Flush the internal buffer of the decoder (for incomplete multi-byte chars)
+                    buffer += decoder.decode();
                     // Process any remaining data in the buffer
                     if (buffer) {
                         const lines = buffer.split('\n');

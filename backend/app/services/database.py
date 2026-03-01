@@ -1,3 +1,4 @@
+import threading
 from supabase import create_client, Client
 from app.core.config import settings
 
@@ -13,7 +14,6 @@ def get_supabase_client() -> Client:
         raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured")
     return create_client(supabase_url, supabase_key)
 
-import threading
 
 _client_lock = threading.Lock()
 # Lazy initialization for Supabase client

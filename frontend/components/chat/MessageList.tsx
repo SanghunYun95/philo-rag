@@ -1,12 +1,12 @@
-/* eslint-disable @next/next/no-img-element */
 import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw } from "lucide-react";
-import { Message } from "../../types/chat";
+import { Message, DocumentMetadata } from "../../types/chat";
 
 interface Props {
     messages: Message[];
+    onOpenCitation?: (meta: DocumentMetadata) => void;
 }
 
-export function MessageList({ messages }: Props) {
+export function MessageList({ messages, onOpenCitation }: Props) {
     if (messages.length === 0) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
@@ -78,7 +78,10 @@ export function MessageList({ messages }: Props) {
                                         <div key={idx} className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card">
                                             <div className="h-16 w-12 shrink-0 bg-white/10 flex items-center justify-center rounded shadow-inner overflow-hidden">
                                                 {meta.book_info.cover_url && !meta.book_info.cover_url.includes("dummy") ? (
-                                                    <img src={meta.book_info.cover_url} alt={title} className="w-full h-full object-cover opacity-80" />
+                                                    <>
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                        <img src={meta.book_info.cover_url} alt={title} className="w-full h-full object-cover opacity-80" />
+                                                    </>
                                                 ) : (
                                                     <span className="font-display text-xl text-primary/60">{meta.scholar.charAt(0)}</span>
                                                 )}
@@ -89,17 +92,16 @@ export function MessageList({ messages }: Props) {
                                                     {meta.scholar} - {meta.school}
                                                 </p>
                                             </div>
-                                            <button
-                                                type="button"
-                                                aria-label={`${title} 참고 문헌 열기`}
-                                                onClick={() => {
-                                                    // TODO: Implement actual URL opening or expanding logic
-                                                    console.log("Citation clicked:", meta)
-                                                }}
-                                                className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 group-hover/card:bg-primary group-hover/card:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all self-center"
-                                            >
-                                                <SquareArrowOutUpRight className="w-4 h-4" />
-                                            </button>
+                                            {onOpenCitation && (
+                                                <button
+                                                    type="button"
+                                                    aria-label={`${title} 참고 문헌 열기`}
+                                                    onClick={() => onOpenCitation(meta)}
+                                                    className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 group-hover/card:bg-primary group-hover/card:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all self-center"
+                                                >
+                                                    <SquareArrowOutUpRight className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     )
                                 })}

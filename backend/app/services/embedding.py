@@ -17,7 +17,7 @@ class EmbeddingService:
         if self._embeddings is None:
             with self._lock:
                 if self._embeddings is None:
-                    logger.info(f"Loading local embedding model: {MODEL_NAME} (HuggingFace)...")
+                    logger.info("Loading local embedding model: %s (HuggingFace)...", MODEL_NAME)
                     self._embeddings = HuggingFaceEmbeddings(
                         model_name=MODEL_NAME,
                         model_kwargs={'device': 'cpu'},
