@@ -1,7 +1,6 @@
 import os
 import pytest
 import asyncio
-import pytest
 
 @pytest.fixture(autouse=True)
 def mock_env_vars():
@@ -12,7 +11,7 @@ def mock_env_vars():
 
 @pytest.fixture(scope="session")
 def event_loop():
-    """Create an instance of the default event loop for each test case.
+    """Create a single event loop instance shared across the entire test session.
     Scoped to session to prevent global client implementations (e.g. Supabase Python client) 
     from binding `asyncio.locks.Event` instances to closed function-scoped event loops."""
     loop = asyncio.get_event_loop_policy().new_event_loop()

@@ -27,7 +27,7 @@ def test_chat_endpoint_success(mock_stream, mock_translate, mock_search, mock_em
     mock_search.return_value = mock_response
     
     # Mock LLM stream generator
-    async def mock_async_generator(*args, **kwargs):
+    async def mock_async_generator(*_args, **_kwargs):
         for chunk in ["인생은", " ", "고통입니다."]:
             yield chunk
     mock_stream.return_value = mock_async_generator()

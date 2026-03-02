@@ -26,7 +26,7 @@ export function Sidebar({ messages = [] }: SidebarProps) {
 
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                <ActivePhilosophers metadata={currentMetadata} onPhilosopherClick={() => { /* TODO: Implement philosopher filter */ }} />
+                <ActivePhilosophers metadata={currentMetadata} onPhilosopherClick={(scholar) => { /* TODO: Implement philosopher filter using scholar */ }} />
                 <ContextSources metadata={currentMetadata} />
             </div>
 

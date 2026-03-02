@@ -71,12 +71,17 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                                 </div>
 
                                 {/* Citation Cards if metadata exists */}
-                                {msg.metadata && msg.metadata.length > 0 && Array.from(new Set(msg.metadata.map(m => m.id))).map((id) => {
-                                    const meta = msg.metadata?.find(m => m.id === id);
-                                    if (!meta) return null;
+                                {msg.metadata && msg.metadata.length > 0 && Array.from(new Map(msg.metadata.map((m) => [m.id, m])).values()).map((meta) => {
                                     const title = meta.book_info.title;
                                     return (
-                                        <div key={meta.id} onClick={() => onOpenCitation?.(meta)} className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card">
+                                        <div
+                                            key={meta.id}
+                                            role="button"
+                                            tabIndex={onOpenCitation ? 0 : undefined}
+                                            onClick={() => onOpenCitation?.(meta)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenCitation?.(meta); } }}
+                                            className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card"
+                                        >
                                             <div className="h-16 w-12 shrink-0 bg-white/10 flex items-center justify-center rounded shadow-inner overflow-hidden">
                                                 {meta.book_info.cover_url && !meta.book_info.cover_url.includes("dummy") ? (
                                                     <>

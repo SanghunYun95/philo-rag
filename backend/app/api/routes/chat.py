@@ -14,9 +14,13 @@ from app.core.rate_limit import limiter
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+class HistoryMessage(BaseModel):
+    role: str
+    content: str
+
 class ChatRequest(BaseModel):
     query: str
-    history: List[Dict[str, str]] = Field(default_factory=list)
+    history: List[HistoryMessage] = Field(default_factory=list)
 
 def _search_documents(query_vector):
     return get_client().rpc(
@@ -24,7 +28,7 @@ def _search_documents(query_vector):
         {'query_embedding': query_vector, 'match_count': 3}
     ).execute()
 
-async def generate_chat_events(request: Request, query: str, history: List[Dict[str, str]]):
+async def generate_chat_events(request: Request, query: str, history: List[HistoryMessage]):
     """
     Generator function that streams SSE events.
     It yields 'metadata' first, then chunks of 'content'.
@@ -88,8 +92,14 @@ async def generate_chat_events(request: Request, query: str, history: List[Dict[
     formatted_parts: List[str] = []
 
     for msg in history_tail:
-        role_name = "User" if msg.get("role") == "user" else "Agent (PhiloRAG)"
-        content = (msg.get("content") or "").strip()
+        role = str(msg.role or "").lower()
+        if role == "user":
+            role_name = "User"
+        elif role in ("ai", "agent", "philorag"):
+            role_name = "Agent (PhiloRAG)"
+        else:
+            continue
+        content = (msg.content or "").strip()
         if not content:
             continue
         formatted_parts.append(f"{role_name}: {content[:MAX_HISTORY_CHARS]}")

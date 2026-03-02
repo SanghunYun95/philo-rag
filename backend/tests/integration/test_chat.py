@@ -1,7 +1,6 @@
 from fastapi.testclient import TestClient
 import pytest
 from app.main import app
-from app.api.routes.chat import ChatRequest
 from unittest.mock import patch
 
 @patch("app.api.routes.chat.generate_chat_events")

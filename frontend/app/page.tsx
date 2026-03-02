@@ -9,7 +9,7 @@ export default function Home() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const processLine = useCallback((line: string, eventObj: { current: string }, aiMsgId: string, setMessages: React.Dispatch<React.SetStateAction<Message[]>>): boolean => {
+    const processLine = useCallback((line: string, eventObj: { current: string }, aiMsgId: string): boolean => {
         if (line.startsWith("event: ")) {
             eventObj.current = line.substring(7).trim();
         } else if (line.startsWith("data: ")) {
@@ -107,7 +107,7 @@ export default function Home() {
                     if (buffer) {
                         const lines = buffer.split('\n');
                         for (const line of lines) {
-                            if (processLine(line, eventObj, aiMsgId, setMessages)) {
+                            if (processLine(line, eventObj, aiMsgId)) {
                                 shouldStop = true;
                                 break;
                             }
@@ -123,7 +123,7 @@ export default function Home() {
                 buffer = lines.pop() || "";
 
                 for (const line of lines) {
-                    if (processLine(line, eventObj, aiMsgId, setMessages)) {
+                    if (processLine(line, eventObj, aiMsgId)) {
                         shouldStop = true;
                         break;
                     }

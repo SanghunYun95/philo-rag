@@ -7,9 +7,12 @@ interface Props {
 }
 
 export function ContextSources({ metadata }: Props) {
-    const uniqueBooks = Array.from(new Set(metadata.map(m => m.id)))
-        .map(id => metadata.find(m => m.id === id))
-        .filter((m): m is DocumentMetadata => m !== undefined);
+    const uniqueBooks = Array.from(
+        metadata.reduce((acc, m) => {
+            if (!acc.has(m.id)) acc.set(m.id, m);
+            return acc;
+        }, new Map<DocumentMetadata["id"], DocumentMetadata>()).values()
+    );
 
     return (
         <div>

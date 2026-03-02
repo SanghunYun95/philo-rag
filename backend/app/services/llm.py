@@ -1,3 +1,4 @@
+import threading
 import google.generativeai as genai
 from app.core.config import settings
 from langchain_core.prompts import PromptTemplate
@@ -6,6 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 
 # Models will be instantiated lazily or during function call
 _llm = None
+_llm_lock = threading.Lock()
 
 def get_llm():
     global _llm
@@ -13,16 +15,19 @@ def get_llm():
         raise RuntimeError("GEMINI_API_KEY must be configured")
         
     if _llm is None:
-        # Configure Gemini API natively (optional, if native SDK features are needed)
-        genai.configure(api_key=settings.GEMINI_API_KEY)
-        
-        # Configure LangChain model
-        _llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash", 
-            google_api_key=settings.GEMINI_API_KEY,
-            temperature=0.7,
-            max_retries=2
-        )
+        with _llm_lock:
+            if _llm is None:  # Double-checked locking
+                # Configure Gemini API natively (optional, if native SDK features are needed)
+                genai.configure(api_key=settings.GEMINI_API_KEY)
+                
+                # Configure LangChain model
+                # TODO: model gemini-2.5-flash will be deprecated by June 17, 2026. Plan migration to gemini-3-flash.
+                _llm = ChatGoogleGenerativeAI(
+                    model="gemini-3-flash", 
+                    google_api_key=settings.GEMINI_API_KEY,
+                    temperature=0.7,
+                    max_retries=2
+                )
     return _llm
 
 
