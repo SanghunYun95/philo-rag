@@ -8,11 +8,12 @@ load_dotenv(dotenv_path=env_path)
 
 import sys
 
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    print("No API key found!")
-    sys.exit(1)
-else:
+def main() -> int:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        print("No API key found!")
+        return 1
+
     genai.configure(api_key=api_key)
     print("Available Models:")
     try:
@@ -21,3 +22,8 @@ else:
                 print(m.name)
     except Exception as e:
         print(f"Error listing models: {e}")
+        return 1
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())

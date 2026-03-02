@@ -13,7 +13,7 @@ _llm = None
 _llm_lock = threading.Lock()
 
 def get_all_gemini_keys() -> list[str]:
-    """Reads all active and commented GEMINI_API_KEYs from the root .env file."""
+    """Reads active GEMINI_API_KEY assignments from the root .env file."""
     keys = []
     env_path = Path(__file__).resolve().parents[3] / ".env"
     

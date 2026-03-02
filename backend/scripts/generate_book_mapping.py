@@ -188,7 +188,11 @@ async def main():
             except json.JSONDecodeError:
                 mapping = []
             
-    existing_files = {item["original_file"] for item in mapping}
+    existing_files = {
+        item.get("original_file")
+        for item in mapping
+        if isinstance(item, dict) and item.get("original_file")
+    }
     files_to_process = [f for f in txt_files if f.name not in existing_files]
     
     print(f"Skipping {len(existing_files)} already processed files. Processing {len(files_to_process)} new files.")
