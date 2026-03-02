@@ -1,6 +1,6 @@
 "use client";
 
-import { Share, Plus } from "lucide-react";
+import { Share, Plus, Menu } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
 import { MessageList } from "./MessageList";
 import { FloatingInput } from "./FloatingInput";
@@ -11,9 +11,10 @@ interface ChatMainProps {
     onSendMessage: (query: string) => void;
     isSubmitting: boolean;
     onClearChat: () => void;
+    onMenuClick?: () => void;
 }
 
-export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat }: ChatMainProps) {
+export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat, onMenuClick }: ChatMainProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const [startTime, setStartTime] = useState<string>("");
@@ -41,19 +42,27 @@ export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat }:
     return (
         <main className="flex-1 flex flex-col relative min-h-0 bg-[#0f0f11] overflow-hidden">
             {/* Top Navigation / Context Header */}
-            <div className="flex-none p-6 flex justify-between items-start bg-[#0f0f11] border-b border-white/5 z-30">
-                <div>
-                    <h2 className="font-display text-3xl text-white/90">미덕에 관한 대화</h2>
-                    <p className="text-sm text-white/40 mt-1">세션 시작: {mounted ? startTime : ""}</p>
+            <div className="flex-none p-4 md:p-6 flex justify-between items-start bg-[#0f0f11] border-b border-white/5 z-30">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={onMenuClick}
+                        className="md:hidden p-2 text-white/60 hover:text-white rounded-lg bg-white/5 border border-white/10"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+                    <div>
+                        <h2 className="font-display text-xl md:text-3xl text-white/90">미덕에 관한 대화</h2>
+                        <p className="text-xs md:text-sm text-white/40 mt-1">세션 시작: {mounted ? startTime : ""}</p>
+                    </div>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => alert("준비 중입니다.")} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">
+                    <button onClick={() => alert("준비 중입니다.")} className="hidden sm:flex px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors items-center gap-2">
                         <Share className="w-4 h-4" />
                         내보내기
                     </button>
-                    <button onClick={onClearChat} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">
-                        <Plus className="w-4 h-4" />
-                        새 대화
+                    <button onClick={onClearChat} className="p-2 sm:px-4 sm:py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">
+                        <Plus className="w-4 h-4 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">새 대화</span>
                     </button>
                 </div>
             </div>

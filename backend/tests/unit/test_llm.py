@@ -27,7 +27,7 @@ def setup_test_env(monkeypatch):
 
 from unittest.mock import patch, MagicMock
 
-def test_translation(setup_test_env):
+def test_translation():
     print("Testing translation...")
     from app.services.llm import get_english_translation
     with patch("app.services.llm.translation_prompt") as mock_prompt, \
@@ -44,8 +44,9 @@ def test_translation(setup_test_env):
         translated = get_english_translation("미덕이란 무엇인가?")
         print("Translation:", translated)
         assert translated == "Translated Text", "Translation output mocked mismatch"
+        mock_chain.invoke.assert_called_once_with({"query": "미덕이란 무엇인가?"})
 
-def test_streaming(setup_test_env):
+def test_streaming():
     print("Testing streaming...")
     from app.services.llm import get_response_stream
     with patch("app.services.llm.get_rag_prompt") as mock_prompt, \
@@ -62,9 +63,10 @@ def test_streaming(setup_test_env):
         stream = get_response_stream(context="Virtue is excellence.", query="What is virtue?")
         results = list(stream)
         assert results == ["안녕하세요", " ", "철학자", "입니다."], "Stream chunks mocked mismatch"
+        mock_chain.stream.assert_called_once_with({"context": "Virtue is excellence.", "chat_history": "", "query": "What is virtue?"})
 
 @pytest.mark.asyncio
-async def test_streaming_async(setup_test_env):
+async def test_streaming_async():
     print("Testing streaming async...")
     from app.services.llm import get_response_stream_async
     with patch("app.services.llm.get_rag_prompt") as mock_prompt, \

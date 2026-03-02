@@ -8,6 +8,7 @@ import { Message } from "../types/chat";
 export default function Home() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const processLine = useCallback((line: string, eventObj: { current: string }, aiMsgId: string): boolean => {
         if (line.startsWith("event: ")) {
@@ -23,7 +24,7 @@ export default function Home() {
                     setMessages((prev) =>
                         prev.map(msg => msg.id === aiMsgId ? { ...msg, metadata: philosophersArray } : msg)
                     );
-                } catch { console.error("Could not parse metadata event:", currentData) }
+                } catch (e) { console.error("Could not parse metadata event:", currentData, e) }
             } else if (currentEvent === "content") {
                 // un-escape \\n to real newlines
                 const char = currentData.replace(/\\n/g, '\n');
@@ -150,9 +151,15 @@ export default function Home() {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden">
-            <Sidebar messages={messages} />
-            <ChatMain messages={messages} onSendMessage={handleSendMessage} isSubmitting={isSubmitting} onClearChat={() => setMessages([])} />
+        <div className="flex h-screen overflow-hidden relative">
+            <Sidebar messages={messages} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <ChatMain
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                isSubmitting={isSubmitting}
+                onClearChat={() => setMessages([])}
+                onMenuClick={() => setIsSidebarOpen(true)}
+            />
         </div>
     );
 }

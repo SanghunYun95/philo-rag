@@ -22,14 +22,14 @@ export function MessageList({ messages, onOpenCitation }: Props) {
     }
 
     return (
-        <div className="w-full px-8 pt-10 pb-10">
-            <div className="max-w-3xl mx-auto flex flex-col gap-10">
+        <div className="w-full px-4 md:px-8 pt-6 md:pt-10 pb-10">
+            <div className="max-w-3xl mx-auto flex flex-col gap-8 md:gap-10">
                 {messages.map((msg) => (
                     msg.role === "user" ? (
                         <div key={msg.id} className="flex justify-end group">
-                            <div className="flex flex-col items-end max-w-[80%]">
-                                <div className="bg-[#1a1a1e] border border-white/10 rounded-2xl rounded-tr-sm px-6 py-4 shadow-lg">
-                                    <p className="text-white/90 font-sans leading-relaxed whitespace-pre-wrap">
+                            <div className="flex flex-col items-end max-w-[90%] md:max-w-[80%]">
+                                <div className="bg-[#1a1a1e] border border-white/10 rounded-2xl rounded-tr-sm px-5 py-3 md:px-6 md:py-4 shadow-lg">
+                                    <p className="text-white/90 font-sans leading-relaxed whitespace-pre-wrap text-sm md:text-base">
                                         {msg.content}
                                     </p>
                                 </div>
@@ -37,16 +37,16 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                             </div>
                         </div>
                     ) : (
-                        <div key={msg.id} className="flex gap-6 group">
+                        <div key={msg.id} className="flex gap-4 md:gap-6 group">
                             <div className="shrink-0 flex flex-col items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#1a1a1e] to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
-                                    <Sparkles className="text-primary w-5 h-5" />
+                                <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-[#1a1a1e] to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
+                                    <Sparkles className="text-primary w-4 h-4 md:w-5 md:h-5" />
                                 </div>
                                 <div className="w-px h-full bg-gradient-to-b from-white/10 to-transparent"></div>
                             </div>
-                            <div className="flex-1 pb-8">
+                            <div className="flex-1 pb-8 min-w-0">
                                 <div className="flex items-center gap-3 mb-2">
-                                    <span className="font-display font-bold text-primary text-lg">PhiloRAG</span>
+                                    <span className="font-display font-bold text-primary text-base md:text-lg">PhiloRAG</span>
                                     {msg.isStreaming && !msg.content && (
                                         <span className="px-2 py-0.5 rounded-full bg-primary/10 text-[10px] text-primary uppercase tracking-wider border border-primary/20 animate-pulse">
                                             생각중...
@@ -56,7 +56,7 @@ export function MessageList({ messages, onOpenCitation }: Props) {
 
                                 <div className="prose prose-invert max-w-none text-white/80">
                                     {msg.content ? (
-                                        <div className="font-sans leading-7 text-white/80 whitespace-pre-wrap">
+                                        <div className="font-sans leading-7 text-white/80 whitespace-pre-wrap text-sm md:text-base break-words">
                                             {msg.content}
                                         </div>
                                     ) : (
