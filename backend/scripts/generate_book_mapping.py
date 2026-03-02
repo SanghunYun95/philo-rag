@@ -30,14 +30,16 @@ if env_path.exists():
             key = m.group(1).strip().strip('"').strip("'")
             if key and key not in api_keys:
                 api_keys.append(key)
-else:
-    # Fallback to os.environ if .env missing
+
+# Fallback to os.environ when parsing produced no key
+if not api_keys:
     k = os.getenv("GEMINI_API_KEY")
-    if k:
+    if k and k not in api_keys:
         api_keys.append(k)
 
 # The user explicitly asked to start testing from new keys (lines 8~14), and then go back to line 2.
-if len(api_keys) >= 4:
+# Rotates keys only when running with ENABLE_TEST_KEY_ROTATION flag.
+if os.getenv("ENABLE_TEST_KEY_ROTATION") and len(api_keys) >= 4:
     api_keys = api_keys[3:] + api_keys[:3]
 
 current_key_idx = 0

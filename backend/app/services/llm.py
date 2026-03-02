@@ -21,7 +21,11 @@ def get_all_gemini_keys() -> list[str]:
         with open(env_path, "r", encoding="utf-8") as f:
             content = f.read()
             # Find all variations of GEMINI_API_KEY assignments
-            matches = re.findall(r'(?:#\s*)?GEMINI_API_KEY\s*=\s*(.+)', content)
+            matches = re.findall(
+                r'^\s*GEMINI_API_KEY\s*=\s*(.+?)\s*(?:#.*)?$',
+                content,
+                flags=re.MULTILINE,
+            )
             for m in matches:
                 # Remove inline comments and strip quotes
                 m = re.split(r'\s+#', m, 1)[0]
