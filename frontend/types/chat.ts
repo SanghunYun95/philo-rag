@@ -10,6 +10,9 @@ export interface DocumentMetadata {
     scholar: string;
     book_info: BookInfo;
     chunk_index: number;
+    kr_title?: string;
+    thumbnail?: string;
+    link?: string;
 }
 
 export interface Message {
