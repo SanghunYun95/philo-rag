@@ -10,29 +10,32 @@ from app.services.embedding import embedding_service
 async def test_supabase_match_integration():
     # 1. We mock the embedding service to return a dummy vector
     with patch("app.api.routes.chat.embedding_service.generate_embedding") as mock_embed, \
-         patch("app.api.routes.chat.supabase_client.rpc") as mock_rpc, \
+         patch("app.api.routes.chat._search_documents") as mock_search, \
          patch("app.api.routes.chat.get_english_translation") as mock_translate, \
-         patch("app.api.routes.chat.get_response_stream") as mock_stream:
+         patch("app.api.routes.chat.get_response_stream_async") as mock_stream:
          
         mock_translate.return_value = "English Question"
         mock_embed.return_value = [0.1, 0.2, 0.3]
         
-        # Mock Supabase RPC response chain: .rpc().execute().data
-        mock_execute = MagicMock()
-        mock_execute.execute.return_value.data = [
+        # Mock Supabase RPC response chain: _search_documents
+        mock_response = MagicMock()
+        mock_response.data = [
             {"content": "Philosophy is life", "metadata": {"author": "Socrates"}}
         ]
-        mock_rpc.return_value = mock_execute
+        mock_search.return_value = mock_response
         
         # Mock LLM stream
-        mock_stream.return_value = (chunk for chunk in ["답변", "입니다"])
+        async def mock_async_generator(*args, **kwargs):
+            for chunk in ["답변", "입니다"]:
+                yield chunk
+        mock_stream.return_value = mock_async_generator()
         
         # We need a mock request for the SSE loop
         from unittest.mock import AsyncMock
         mock_request = MagicMock()
         mock_request.is_disconnected = AsyncMock(return_value=False)
         
-        generator = generate_chat_events(mock_request, "안녕")
+        generator = generate_chat_events(mock_request, "안녕", [])
         
         events = []
         async for event in generator:
@@ -43,10 +46,7 @@ async def test_supabase_match_integration():
         mock_embed.assert_called_once_with("English Question")
         
         # Important: Verify Supabase RPC was called with the exact vector from Embedding Service
-        mock_rpc.assert_called_once_with(
-            'match_documents', 
-            {'query_embedding': [0.1, 0.2, 0.3], 'match_count': 3}
-        )
+        mock_search.assert_called_once_with([0.1, 0.2, 0.3])
         
         # Verify event stream structure
         assert len(events) == 3 # metadata + "답변" + "입니다"
