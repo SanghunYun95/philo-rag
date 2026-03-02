@@ -7,6 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import urllib.request
 import urllib.parse
+import urllib.error
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
 
@@ -23,14 +24,17 @@ api_keys = []
 if env_path.exists():
     with open(env_path, 'r', encoding='utf-8') as f:
         for line in f:
-            if "GEMINI_API_KEY=" in line:
-                key = line.split("GEMINI_API_KEY=")[1].strip()
-                if key not in api_keys:
-                    api_keys.append(key)
+            m = re.match(r'^\s*GEMINI_API_KEY\s*=\s*(.+?)\s*(?:#.*)?$', line)
+            if not m:
+                continue
+            key = m.group(1).strip().strip('"').strip("'")
+            if key and key not in api_keys:
+                api_keys.append(key)
 else:
     # Fallback to os.environ if .env missing
     k = os.getenv("GEMINI_API_KEY")
-    if k: api_keys.append(k)
+    if k:
+        api_keys.append(k)
 
 # The user explicitly asked to start testing from new keys (lines 8~14), and then go back to line 2.
 if len(api_keys) >= 4:
@@ -61,14 +65,18 @@ async def kyobo_fallback(title: str, author: str) -> dict:
     loop = asyncio.get_running_loop()
     def fetch():
         try:
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req, timeout=10) as response:
                 return response.read().decode('utf-8')
-        except Exception as e:
-            print(f"Kyobo fetch error: {e}")
+        except urllib.error.URLError as e:
+            print(f"Kyobo network error: {e}")
             return None
+        except Exception as e:
+            print(f"Kyobo undefined error: {e}")
+            raise
             
     html = await loop.run_in_executor(None, fetch)
-    if not html: return {"kr_title": clean_title, "kr_author": author}
+    if not html:
+        return {"kr_title": clean_title, "kr_author": author}
     
     match = re.search(r'<span class="prod_name">(.*?)</span>', html)
     if match:
@@ -124,7 +132,7 @@ async def search_aladin(title: str, author: str) -> dict:
     try:
         loop = asyncio.get_running_loop()
         def fetch():
-            with urllib.request.urlopen(url) as response:
+            with urllib.request.urlopen(url, timeout=10) as response:
                 return response.read().decode('utf-8')
         
         response_text = await loop.run_in_executor(None, fetch)
@@ -189,8 +197,10 @@ async def main():
             result = await process_file(f)
             mapping.append(result)
             
-            with open(MAPPING_FILE, "w", encoding="utf-8") as out_f:
+            tmp_file = MAPPING_FILE.with_suffix(".json.tmp")
+            with open(tmp_file, "w", encoding="utf-8") as out_f:
                 json.dump(mapping, out_f, ensure_ascii=False, indent=4)
+            tmp_file.replace(MAPPING_FILE)
                 
             print(f"Processed {i + 1}/{len(files_to_process)}, sleeping for 4s...")
             await asyncio.sleep(4.1)

@@ -1,6 +1,9 @@
 import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw } from "lucide-react";
 import { Message, DocumentMetadata } from "../../types/chat";
 
+const DUMMY_COVER_URL = "https://image.aladin.co.kr/product/dummy";
+const DUMMY_BOOK_LINK = "https://www.aladin.co.kr/dummy-link";
+
 interface Props {
     messages: Message[];
     onOpenCitation?: (meta: DocumentMetadata) => void;
@@ -74,7 +77,7 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                                 {msg.metadata && msg.metadata.length > 0 && Array.from(new Map(msg.metadata.map((m) => [m.id, m])).values()).map((meta) => {
                                     const title = meta.kr_title || meta.book_info?.title || meta.id;
                                     // Use newly added 'thumbnail' fallback to cover_url
-                                    const coverUrl = meta.thumbnail || (meta.book_info?.cover_url !== "https://image.aladin.co.kr/product/dummy" ? meta.book_info?.cover_url : "");
+                                    const coverUrl = meta.thumbnail || (meta.book_info?.cover_url !== DUMMY_COVER_URL ? meta.book_info?.cover_url : "");
                                     const bookLink = meta.link || meta.book_info?.link;
 
                                     const isClickable = Boolean(onOpenCitation);
@@ -117,7 +120,7 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                                                     </div>
                                                     <h5 className="text-white/90 font-display text-base font-medium leading-snug line-clamp-2">{title}</h5>
 
-                                                    {bookLink && bookLink !== "https://www.aladin.co.kr/dummy-link" && (
+                                                    {bookLink && bookLink !== DUMMY_BOOK_LINK && (
                                                         <div className="mt-auto pt-2 flex items-center">
                                                             <a
                                                                 href={bookLink}

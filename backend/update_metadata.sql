@@ -3,6 +3,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_book_title ON documents ((metadata->'bo
 
 SET statement_timeout = '120s'; -- Increase timeout to be safe
 
+BEGIN;
 
 UPDATE documents
 SET metadata = metadata || '{"kr_title": "역설의 예산 1권", "thumbnail": "", "link": ""}'::jsonb
@@ -407,3 +408,5 @@ WHERE metadata->'book_info'->>'title' = 'Korean Translation of 日知錄 Chinese
 UPDATE documents
 SET metadata = metadata || '{"kr_title": "한시외전", "thumbnail": "", "link": ""}'::jsonb
 WHERE metadata->'book_info'->>'title' = 'Korean Translation of 韓詩外傳 Complete Chinese';
+
+COMMIT;

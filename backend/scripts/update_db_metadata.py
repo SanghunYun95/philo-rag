@@ -17,7 +17,7 @@ from app.services.database import get_client
 # Load mapping data
 MAPPING_FILE = backend_dir / "data" / "books_mapping.json"
 
-async def update_database():
+def update_database():
     print(f"Loading mapping from {MAPPING_FILE}")
     if not MAPPING_FILE.exists():
         print("Mapping file not found.")
@@ -65,7 +65,7 @@ async def update_database():
     for book in mapping_data:
         original_file = book.get("original_file", "")
         # Parse filename exactly as ingest_all_data.py did to recreate the title.
-        name_without_ext = original_file[:-4]
+        name_without_ext = Path(original_file).stem
         parts = name_without_ext.rsplit(" by ", 1)
         if len(parts) == 2:
             title = parts[0].strip()
@@ -109,18 +109,24 @@ async def update_database():
     # Batch update using concurrent updates
     if updates_to_make:
         import concurrent.futures
+        from time import sleep
 
         def update_doc(doc):
-            try:
-                supabase.table("documents").update({"metadata": doc["metadata"]}).eq("id", doc["id"]).execute()
-                return True
-            except Exception as e:
-                print(f"Error updating {doc['id']}: {e}")
-                return False
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    supabase.table("documents").update({"metadata": doc["metadata"]}).eq("id", doc["id"]).execute()
+                    return True
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        sleep(0.5 * (attempt + 1))  # Exponential backoff
+                        continue
+                    print(f"Error updating {doc['id']}: {e}")
+                    return False
 
-        print(f"Starting concurrent updates with 50 workers for {len(updates_to_make)} rows...")
+        print(f"Starting concurrent updates with 10 workers for {len(updates_to_make)} rows...")
         processed = 0
-        with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             for result in executor.map(update_doc, updates_to_make):
                 processed += 1
                 if result:
@@ -134,4 +140,4 @@ async def update_database():
     print(f"\nUpdate complete! Success: {success_count}, Errors: {error_count}")
 
 if __name__ == "__main__":
-    asyncio.run(update_database())
+    update_database()

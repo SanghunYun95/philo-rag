@@ -16,7 +16,7 @@ def generate_sql():
     
     for book in mapping_data:
         original_file = book.get("original_file", "")
-        name_without_ext = original_file[:-4]
+        name_without_ext = os.path.splitext(original_file)[0]
         parts = name_without_ext.rsplit(" by ", 1)
         if len(parts) == 2:
             title = parts[0].strip()
@@ -31,9 +31,6 @@ def generate_sql():
         link = aladin.get("link", "")
         
         # Escape single quotes in strings for SQL
-        kr_title_esc = kr_title.replace("'", "''")
-        thumbnail_esc = thumbnail.replace("'", "''")
-        link_esc = link.replace("'", "''")
         title_to_match_esc = title_to_match.replace("'", "''")
         
         jsonb_payload = json.dumps({

@@ -23,7 +23,9 @@ def get_all_gemini_keys() -> list[str]:
             # Find all variations of GEMINI_API_KEY assignments
             matches = re.findall(r'(?:#\s*)?GEMINI_API_KEY\s*=\s*(.+)', content)
             for m in matches:
-                key = m.strip()
+                # Remove inline comments and strip quotes
+                m = re.split(r'\s+#', m, 1)[0]
+                key = m.strip().strip('"').strip("'")
                 if key and key not in keys:
                     keys.append(key)
                     
