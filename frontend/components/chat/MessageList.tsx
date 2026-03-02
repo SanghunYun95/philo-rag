@@ -73,14 +73,25 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                                 {/* Citation Cards if metadata exists */}
                                 {msg.metadata && msg.metadata.length > 0 && Array.from(new Map(msg.metadata.map((m) => [m.id, m])).values()).map((meta) => {
                                     const title = meta.book_info.title;
+                                    const isClickable = Boolean(onOpenCitation);
+                                    const interactiveProps = isClickable
+                                        ? {
+                                            role: "button" as const,
+                                            tabIndex: 0,
+                                            onClick: () => onOpenCitation?.(meta),
+                                            onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+                                                if (e.key === "Enter" || e.key === " ") {
+                                                    e.preventDefault();
+                                                    onOpenCitation?.(meta);
+                                                }
+                                            },
+                                        }
+                                        : {};
                                     return (
                                         <div
                                             key={meta.id}
-                                            role="button"
-                                            tabIndex={onOpenCitation ? 0 : undefined}
-                                            onClick={() => onOpenCitation?.(meta)}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenCitation?.(meta); } }}
-                                            className="mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl hover:border-primary/30 transition-colors cursor-pointer group/card"
+                                            {...interactiveProps}
+                                            className={`mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl transition-colors group/card ${isClickable ? "hover:border-primary/30 cursor-pointer" : ""}`}
                                         >
                                             <div className="h-16 w-12 shrink-0 bg-white/10 flex items-center justify-center rounded shadow-inner overflow-hidden">
                                                 {meta.book_info.cover_url && !meta.book_info.cover_url.includes("dummy") ? (

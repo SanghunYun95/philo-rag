@@ -87,7 +87,5 @@ async def test_streaming_async(setup_test_env):
 
 # For manual execution
 if __name__ == "__main__":
-    import asyncio
-    test_translation(None)
-    test_streaming(None)
-    asyncio.run(test_streaming_async(None))
+    import pytest
+    raise SystemExit(pytest.main([__file__]))

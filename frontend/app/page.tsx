@@ -13,7 +13,7 @@ export default function Home() {
         if (line.startsWith("event: ")) {
             eventObj.current = line.substring(7).trim();
         } else if (line.startsWith("data: ")) {
-            const currentData = line.substring(6);
+            const currentData = line.substring(6).replace(/\r$/, "");
             const currentEvent = eventObj.current;
 
             if (currentEvent === "metadata" && currentData.trim() !== "") {

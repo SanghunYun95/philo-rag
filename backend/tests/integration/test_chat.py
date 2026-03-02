@@ -8,9 +8,11 @@ def test_chat_rate_limiting(mock_events):
     """Test that the chat endpoint correctly limits requests to 5 per minute."""
     
     # Mock event generator to bypass ML initializations and remote calls
-    async def mock_generator(*args, **kwargs):
+    async def mock_generator(*_args, **_kwargs):
         yield "data: ok\n\n"
-    mock_events.side_effect = lambda *args, **kwargs: mock_generator()
+    def _mock_events_factory(*_args, **_kwargs):
+        return mock_generator()
+    mock_events.side_effect = _mock_events_factory
     
     # We will use the synchronous TestClient to avoid asyncio event loop leaking from SSE Streams
     with TestClient(app) as client:
