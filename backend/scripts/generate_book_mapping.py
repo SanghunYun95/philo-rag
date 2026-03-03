@@ -115,7 +115,7 @@ async def translate_book_info(file_name: str) -> dict:
                 
     # If all keys exhausted or other error, fallback
     print(f"LLM Failed for {file_name}, falling back to Kyobo Search...")
-    name_without_ext = file_name
+    name_without_ext = os.path.splitext(file_name)[0]
     parts = name_without_ext.rsplit(" by ", 1)
     fallback_title = parts[0].strip()
     fallback_author = parts[1].strip() if len(parts) == 2 else ""

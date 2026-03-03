@@ -1,5 +1,5 @@
 import { Sparkles, SquareArrowOutUpRight } from "lucide-react";
-import { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Message, DocumentMetadata } from "../../types/chat";
 
 const DUMMY_COVER_URL = "https://image.aladin.co.kr/product/dummy";
@@ -16,6 +16,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
     const visibleMessages = useRef<Map<string, number>>(new Map());
     const pendingElements = useRef<Set<HTMLDivElement>>(new Set());
     const elementById = useRef<Map<string, HTMLDivElement>>(new Map());
+    const refCallbackById = useRef<Map<string, (el: HTMLDivElement | null) => void>>(new Map());
 
     const messagesRef = useRef(messages);
     const callbackRef = useRef(onVisibleMessageChange);
@@ -92,12 +93,14 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         const visibleMessagesMap = visibleMessages.current;
         const pendingElementsSet = pendingElements.current;
         const elementByIdMap = elementById.current;
+        const refCallbackByIdMap = refCallbackById.current;
 
         return () => {
             observer.current?.disconnect();
             visibleMessagesMap.clear();
             pendingElementsSet.clear();
             elementByIdMap.clear();
+            refCallbackByIdMap.clear();
         };
     }, []); // Empty deps because we rely on refs
 
@@ -116,8 +119,18 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         } else {
             elementById.current.delete(id);
             visibleMessages.current.delete(id);
+            refCallbackById.current.delete(id);
         }
     }, []);
+
+    const getMessageRef = useCallback((id: string) => {
+        let cb = refCallbackById.current.get(id);
+        if (!cb) {
+            cb = (el) => observeElement(id, el);
+            refCallbackById.current.set(id, cb);
+        }
+        return cb;
+    }, [observeElement]);
 
     if (messages.length === 0) {
         return (
@@ -149,7 +162,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                             </div>
                         </div>
                     ) : (
-                        <div key={msg.id} ref={(el) => observeElement(msg.id, el)} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
+                        <div key={msg.id} ref={getMessageRef(msg.id)} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
                             <div className="shrink-0 flex flex-col items-center gap-3">
                                 <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-[#1a1a1e] to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
                                     <Sparkles className="text-primary w-4 h-4 md:w-5 md:h-5" />
