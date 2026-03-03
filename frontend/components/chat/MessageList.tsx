@@ -1,4 +1,4 @@
-import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw } from "lucide-react";
+import { Sparkles, SquareArrowOutUpRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Message, DocumentMetadata } from "../../types/chat";
 
@@ -225,19 +225,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                                     )
                                 })}
 
-                                {!msg.isStreaming && (
-                                    <div className="flex gap-4 mt-6">
-                                        <button type="button" aria-label="유용함" className="text-xs text-white/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded flex items-center gap-1 transition-colors">
-                                            <ThumbsUp className="w-3 h-3" /> 유용함
-                                        </button>
-                                        <button type="button" aria-label="복사" className="text-xs text-white/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded flex items-center gap-1 transition-colors">
-                                            <Copy className="w-3 h-3" /> 복사
-                                        </button>
-                                        <button type="button" aria-label="재생성" className="text-xs text-white/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded flex items-center gap-1 transition-colors">
-                                            <RotateCcw className="w-3 h-3" /> 재생성
-                                        </button>
-                                    </div>
-                                )}
+
                             </div>
                         </div>
                     )
