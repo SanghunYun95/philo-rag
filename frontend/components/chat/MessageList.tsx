@@ -1,5 +1,5 @@
-import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Sparkles, SquareArrowOutUpRight } from "lucide-react";
+import { useEffect, useRef, useCallback } from "react";
 import { Message, DocumentMetadata } from "../../types/chat";
 
 const DUMMY_COVER_URL = "https://image.aladin.co.kr/product/dummy";
@@ -14,12 +14,35 @@ interface Props {
 export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }: Props) {
     const observer = useRef<IntersectionObserver | null>(null);
     const visibleMessages = useRef<Map<string, number>>(new Map());
+    const pendingElements = useRef<Set<HTMLDivElement>>(new Set());
+    const elementById = useRef<Map<string, HTMLDivElement>>(new Map());
+
+    const messagesRef = useRef(messages);
+    const callbackRef = useRef(onVisibleMessageChange);
+
+    // Keep refs in sync with latest props
+    useEffect(() => {
+        messagesRef.current = messages;
+        callbackRef.current = onVisibleMessageChange;
+    }, [messages, onVisibleMessageChange]);
 
     useEffect(() => {
-        if (!onVisibleMessageChange) return;
         visibleMessages.current.clear();
 
         observer.current = new IntersectionObserver((entries) => {
+            const currentMessages = messagesRef.current;
+            const callback = callbackRef.current;
+
+            const emitLatestMetadataOrEmpty = () => {
+                if (!callback) return;
+                const aiMessages = currentMessages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
+                if (aiMessages.length > 0) {
+                    callback(aiMessages[aiMessages.length - 1].metadata!);
+                } else {
+                    callback([]);
+                }
+            };
+
             let changed = false;
             entries.forEach(entry => {
                 const id = entry.target.getAttribute("data-message-id");
@@ -34,6 +57,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
             });
 
             if (changed) {
+                if (!callback) return;
                 let maxRatio = -1;
                 let mostVisibleId: string | null = null;
                 visibleMessages.current.forEach((ratio, id) => {
@@ -44,30 +68,13 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                 });
 
                 if (mostVisibleId) {
-                    const emitLatestMetadataOrEmpty = () => {
-                        const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
-                        if (aiMessages.length > 0) {
-                            onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
-                        } else {
-                            onVisibleMessageChange([]);
-                        }
-                    };
-
-                    const msg = messages.find(m => m.id === mostVisibleId);
+                    const msg = currentMessages.find(m => m.id === mostVisibleId);
                     if (msg && msg.metadata && msg.metadata.length > 0) {
-                        onVisibleMessageChange(msg.metadata);
+                        callback(msg.metadata);
                     } else {
                         emitLatestMetadataOrEmpty();
                     }
                 } else {
-                    const emitLatestMetadataOrEmpty = () => {
-                        const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
-                        if (aiMessages.length > 0) {
-                            onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
-                        } else {
-                            onVisibleMessageChange([]);
-                        }
-                    };
                     emitLatestMetadataOrEmpty();
                 }
             }
@@ -75,14 +82,42 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
             threshold: [0, 0.25, 0.5, 0.75, 1.0]
         });
 
-        const elements = document.querySelectorAll(".ai-message-card");
-        elements.forEach(el => { observer.current?.observe(el); });
+        // The callback ref `observeElement` guarantees DOM readiness.
+        // We observe any elements that rendered before the observer was initialized.
+        pendingElements.current.forEach((el) => {
+            observer.current?.observe(el);
+        });
+
+        // Capture ref values for cleanup to satisfy react-hooks/exhaustive-deps
+        const visibleMessagesMap = visibleMessages.current;
+        const pendingElementsSet = pendingElements.current;
+        const elementByIdMap = elementById.current;
 
         return () => {
             observer.current?.disconnect();
-            visibleMessages.current.clear();
+            visibleMessagesMap.clear();
+            pendingElementsSet.clear();
+            elementByIdMap.clear();
         };
-    }, [messages, onVisibleMessageChange]);
+    }, []); // Empty deps because we rely on refs
+
+    const observeElement = useCallback((id: string, el: HTMLDivElement | null) => {
+        const prev = elementById.current.get(id);
+        if (prev && prev !== el) {
+            observer.current?.unobserve(prev);
+            pendingElements.current.delete(prev);
+            visibleMessages.current.delete(id);
+        }
+
+        if (el) {
+            elementById.current.set(id, el);
+            pendingElements.current.add(el);
+            observer.current?.observe(el);
+        } else {
+            elementById.current.delete(id);
+            visibleMessages.current.delete(id);
+        }
+    }, []);
 
     if (messages.length === 0) {
         return (
@@ -114,7 +149,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                             </div>
                         </div>
                     ) : (
-                        <div key={msg.id} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
+                        <div key={msg.id} ref={(el) => observeElement(msg.id, el)} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
                             <div className="shrink-0 flex flex-col items-center gap-3">
                                 <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-[#1a1a1e] to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
                                     <Sparkles className="text-primary w-4 h-4 md:w-5 md:h-5" />
@@ -225,19 +260,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                                     )
                                 })}
 
-                                {!msg.isStreaming && (
-                                    <div className="flex gap-4 mt-6">
-                                        <button type="button" aria-label="유용함" className="text-xs text-white/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded flex items-center gap-1 transition-colors">
-                                            <ThumbsUp className="w-3 h-3" /> 유용함
-                                        </button>
-                                        <button type="button" aria-label="복사" className="text-xs text-white/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded flex items-center gap-1 transition-colors">
-                                            <Copy className="w-3 h-3" /> 복사
-                                        </button>
-                                        <button type="button" aria-label="재생성" className="text-xs text-white/40 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded flex items-center gap-1 transition-colors">
-                                            <RotateCcw className="w-3 h-3" /> 재생성
-                                        </button>
-                                    </div>
-                                )}
+
                             </div>
                         </div>
                     )

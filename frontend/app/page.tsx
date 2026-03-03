@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import { ChatMain } from "../components/chat/ChatMain";
 import { Message, DocumentMetadata } from "../types/chat";
@@ -11,6 +11,7 @@ export default function Home() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [chatTitle, setChatTitle] = useState<string>("새로운 대화");
     const [activeMetadata, setActiveMetadata] = useState<DocumentMetadata[]>([]);
+    const titleRequestSeqRef = useRef(0);
 
     const processLine = useCallback((line: string, eventObj: { current: string }, aiMsgId: string): boolean => {
         if (line.startsWith("event: ")) {
@@ -73,6 +74,7 @@ export default function Home() {
         const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
         if (isFirstMessage) {
+            const requestSeq = ++titleRequestSeqRef.current;
             fetch(`${baseUrl}/api/v1/chat/title`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -80,6 +82,7 @@ export default function Home() {
             })
                 .then(res => res.json())
                 .then(data => {
+                    if (titleRequestSeqRef.current !== requestSeq) return;
                     if (data.title) setChatTitle(data.title);
                 })
                 .catch(err => console.error("Failed to fetch title:", err));
@@ -176,6 +179,7 @@ export default function Home() {
                 onSendMessage={handleSendMessage}
                 isSubmitting={isSubmitting}
                 onClearChat={() => {
+                    titleRequestSeqRef.current += 1;
                     setMessages([]);
                     setChatTitle("새로운 대화");
                     setActiveMetadata([]);

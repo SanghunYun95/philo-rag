@@ -1,5 +1,5 @@
 import { Settings, History, User, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ActivePhilosophers } from "./ActivePhilosophers";
 import { ContextSources } from "./ContextSources";
 import { Message, DocumentMetadata } from "../../types/chat";
@@ -41,6 +41,14 @@ export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, on
             setFilterScholar(scholar);
         }
     };
+
+    // Reset filter if the filtered scholar no longer exists in available metadata
+    useEffect(() => {
+        if (filterScholar && !allMetadata.some(m => m.scholar === filterScholar)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setFilterScholar(null);
+        }
+    }, [allMetadata, filterScholar]);
 
     return (
         <>
