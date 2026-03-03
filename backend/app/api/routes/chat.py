@@ -14,6 +14,8 @@ from app.core.rate_limit import limiter
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+DEFAULT_CHAT_TITLE = "새로운 대화"
+
 class HistoryMessage(BaseModel):
     role: str
     content: str
@@ -139,20 +141,22 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
     """
     query = title_request.query.strip()
     if not query:
-        return {"title": "새로운 대화"}
+        return {"title": DEFAULT_CHAT_TITLE}
 
     try:
         title = await asyncio.wait_for(generate_chat_title_async(query), timeout=10.0)
         # Handle case where LLM returns something too long or with quotes
         title = title.replace('"', '').replace("'", "").strip()
         if not title:
-            return {"title": "새로운 대화"}
-        if len(title) > 20: # Ensure it's short even if LLM disobeys a bit
-            title = title[:20] + "..."
+            return {"title": DEFAULT_CHAT_TITLE}
+        MAX_TITLE_LEN = 20
+        ELLIPSIS = "..."
+        if len(title) > MAX_TITLE_LEN:
+            title = title[: MAX_TITLE_LEN - len(ELLIPSIS)] + ELLIPSIS
         return {"title": title}
     except asyncio.TimeoutError:
         logger.warning("Timeout generating chat title")
-        return {"title": "새로운 대화"}
+        return {"title": DEFAULT_CHAT_TITLE}
     except Exception:
         logger.exception("Failed to generate chat title")
-        return {"title": "새로운 대화"}
+        return {"title": DEFAULT_CHAT_TITLE}

@@ -17,6 +17,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
 
     useEffect(() => {
         if (!onVisibleMessageChange) return;
+        visibleMessages.current.clear();
 
         observer.current = new IntersectionObserver((entries) => {
             let changed = false;
@@ -43,24 +44,31 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                 });
 
                 if (mostVisibleId) {
-                    const msg = messages.find(m => m.id === mostVisibleId);
-                    if (msg && msg.metadata && msg.metadata.length > 0) {
-                        onVisibleMessageChange(msg.metadata);
-                    } else {
+                    const emitLatestMetadataOrEmpty = () => {
                         const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
                         if (aiMessages.length > 0) {
                             onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
                         } else {
                             onVisibleMessageChange([]);
                         }
+                    };
+
+                    const msg = messages.find(m => m.id === mostVisibleId);
+                    if (msg && msg.metadata && msg.metadata.length > 0) {
+                        onVisibleMessageChange(msg.metadata);
+                    } else {
+                        emitLatestMetadataOrEmpty();
                     }
                 } else {
-                    const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
-                    if (aiMessages.length > 0) {
-                        onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
-                    } else {
-                        onVisibleMessageChange([]);
-                    }
+                    const emitLatestMetadataOrEmpty = () => {
+                        const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
+                        if (aiMessages.length > 0) {
+                            onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
+                        } else {
+                            onVisibleMessageChange([]);
+                        }
+                    };
+                    emitLatestMetadataOrEmpty();
                 }
             }
         }, {
@@ -72,6 +80,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
 
         return () => {
             observer.current?.disconnect();
+            visibleMessages.current.clear();
         };
     }, [messages, onVisibleMessageChange]);
 
