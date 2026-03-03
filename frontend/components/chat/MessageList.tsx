@@ -14,6 +14,7 @@ interface Props {
 export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }: Props) {
     const observer = useRef<IntersectionObserver | null>(null);
     const visibleMessages = useRef<Map<string, number>>(new Map());
+    const pendingElements = useRef<Set<HTMLDivElement>>(new Set());
 
     const messagesRef = useRef(messages);
     const callbackRef = useRef(onVisibleMessageChange);
@@ -25,15 +26,14 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
     }, [messages, onVisibleMessageChange]);
 
     useEffect(() => {
-        if (!callbackRef.current) return;
         visibleMessages.current.clear();
 
         observer.current = new IntersectionObserver((entries) => {
             const currentMessages = messagesRef.current;
             const callback = callbackRef.current;
-            if (!callback) return;
 
             const emitLatestMetadataOrEmpty = () => {
+                if (!callback) return;
                 const aiMessages = currentMessages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
                 if (aiMessages.length > 0) {
                     callback(aiMessages[aiMessages.length - 1].metadata!);
@@ -56,6 +56,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
             });
 
             if (changed) {
+                if (!callback) return;
                 let maxRatio = -1;
                 let mostVisibleId: string | null = null;
                 visibleMessages.current.forEach((ratio, id) => {
@@ -80,19 +81,21 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
             threshold: [0, 0.25, 0.5, 0.75, 1.0]
         });
 
-        // Use setTimeout to ensure DOM updates have happened if any legacy queries remain
-        // but primarily we rely on the callback ref now.
+        // The callback ref `observeElement` guarantees DOM readiness.
+        // We observe any elements that rendered before the observer was initialized.
+        pendingElements.current.forEach((el) => observer.current?.observe(el));
 
         return () => {
             observer.current?.disconnect();
             visibleMessages.current.clear();
+            pendingElements.current.clear();
         };
     }, []); // Empty deps because we rely on refs
 
     const observeElement = useCallback((el: HTMLDivElement | null) => {
-        if (el && observer.current) {
-            observer.current.observe(el);
-        }
+        if (!el) return;
+        pendingElements.current.add(el);
+        observer.current?.observe(el);
     }, []);
 
     if (messages.length === 0) {
