@@ -118,7 +118,6 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
             visibleMessages.current.delete(id);
         }
     }, []);
-
     // getMessageRef를 반환하는 대신, 컴포넌트 내부에서 생성한 맵에 의존하지 않는
     // 컴포넌트 레벨의 메모이제이션 함수로 처리하여 react-hooks/refs 린팅 에러를 방지합니다.
     const messageRefMap = useRef<Map<string, HTMLDivElement>>(new Map());

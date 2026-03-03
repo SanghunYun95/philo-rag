@@ -27,6 +27,14 @@ export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, on
     // Use active metadata from scroll if available, otherwise use latest message's metadata
     const displayMetadata = activeMetadata.length > 0 ? activeMetadata : currentMetadata;
 
+    // Reset filter if the filtered scholar no longer exists in available metadata
+    useEffect(() => {
+        if (filterScholar && !allMetadata.some(m => m.scholar === filterScholar)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setFilterScholar(null);
+        }
+    }, [allMetadata, filterScholar]);
+
     return (
         <>
             {/* Mobile Overlay */}
