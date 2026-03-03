@@ -4,10 +4,9 @@ import { DocumentMetadata } from "../../types/chat";
 interface Props {
     metadata: DocumentMetadata[]; // all seen philosophers
     activeMetadata?: DocumentMetadata[]; // active philosophers
-    onPhilosopherClick?: (scholar: string) => void;
 }
 
-export function ActivePhilosophers({ metadata, activeMetadata = [], onPhilosopherClick }: Props) {
+export function ActivePhilosophers({ metadata, activeMetadata = [] }: Props) {
     const uniquePhilosophers = Array.from(new Set(metadata.map(m => m.scholar)))
         .map(scholar => metadata.find(m => m.scholar === scholar))
         .filter((m): m is DocumentMetadata => m !== undefined);
@@ -36,14 +35,12 @@ export function ActivePhilosophers({ metadata, activeMetadata = [], onPhilosophe
                     {sortedPhilosophers.map((meta) => {
                         const isActive = activeScholarSet.has(meta.scholar);
                         return (
-                            <button
+                            <div
                                 key={meta.scholar}
-                                type="button"
-                                onClick={() => onPhilosopherClick?.(meta.scholar)}
-                                className={`w-full text-left group relative overflow-hidden rounded-xl border p-4 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
+                                className={`w-full text-left group relative overflow-hidden rounded-xl border p-4 transition-all duration-300
                                     ${isActive
                                         ? "border-primary/50 bg-primary/10 shadow-[0_0_15px_rgba(217,183,74,0.1)]"
-                                        : "border-white/10 bg-white/5 hover:border-primary/30"
+                                        : "border-white/10 bg-white/5"
                                     }`}
                             >
                                 <div className={`absolute inset-0 bg-gradient-to-r ${isActive ? "from-primary/10" : "from-primary/5"} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`}></div>
@@ -60,7 +57,7 @@ export function ActivePhilosophers({ metadata, activeMetadata = [], onPhilosophe
                                     </div>
                                     <CheckCircle className={`ml-auto w-5 h-5 shrink-0 transition-colors ${isActive ? "text-primary" : "text-primary/20 group-hover:text-primary/50"}`} />
                                 </div>
-                            </button>
+                            </div>
                         );
                     })}
                 </div>
