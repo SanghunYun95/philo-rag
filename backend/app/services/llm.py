@@ -120,3 +120,19 @@ async def get_response_stream_async(context: str, query: str, history: str = "")
     chain = prompt | get_llm() | StrOutputParser()
     async for chunk in chain.astream({"context": context, "chat_history": history, "query": query}):
         yield chunk
+
+title_prompt = PromptTemplate.from_template(
+    """주어진 질문을 기반으로 철학적인 대화방 제목을 15자 이내로 지어줘.
+    부연 설명 없이 제목만 출력해.
+    
+    질문: {query}
+    제목: """
+)
+
+async def generate_chat_title_async(query: str) -> str:
+    """
+    Generates a short chat title based on the user's first query using Gemini.
+    """
+    chain = title_prompt | get_llm() | StrOutputParser()
+    title = await chain.ainvoke({"query": query})
+    return title.strip()

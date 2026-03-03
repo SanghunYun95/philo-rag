@@ -6,7 +6,7 @@ from fastapi import APIRouter, Request, Depends
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
-from app.services.llm import get_english_translation, get_response_stream_async
+from app.services.llm import get_english_translation, get_response_stream_async, generate_chat_title_async
 from app.services.embedding import embedding_service
 from app.services.database import get_client
 from app.core.rate_limit import limiter
@@ -21,6 +21,9 @@ class HistoryMessage(BaseModel):
 class ChatRequest(BaseModel):
     query: str
     history: List[HistoryMessage] = Field(default_factory=list)
+
+class TitleRequest(BaseModel):
+    query: str
 
 def _search_documents(query_vector):
     return get_client().rpc(
@@ -127,3 +130,20 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
     Endpoint for accepting chat queries and returning a text/event-stream response.
     """
     return EventSourceResponse(generate_chat_events(request, chat_request.query, chat_request.history))
+
+@router.post("/title")
+@limiter.limit("5/minute")
+async def chat_title_endpoint(request: Request, title_request: TitleRequest):
+    """
+    Endpoint for generating a short chat room title based on the first user query.
+    """
+    try:
+        title = await generate_chat_title_async(title_request.query)
+        # Handle case where LLM returns something too long or with quotes
+        title = title.replace('"', '').replace("'", "").strip()
+        if len(title) > 20: # Ensure it's short even if LLM disobeys a bit
+            title = title[:20] + "..."
+        return {"title": title}
+    except Exception:
+        logger.exception("Failed to generate chat title")
+        return {"title": "새로운 대화"}

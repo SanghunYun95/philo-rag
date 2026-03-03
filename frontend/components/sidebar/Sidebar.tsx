@@ -1,17 +1,24 @@
 import { Settings, History, User, X } from "lucide-react";
 import { ActivePhilosophers } from "./ActivePhilosophers";
 import { ContextSources } from "./ContextSources";
-import { Message } from "../../types/chat";
+import { Message, DocumentMetadata } from "../../types/chat";
 
 interface SidebarProps {
     messages?: Message[];
+    activeMetadata?: DocumentMetadata[];
     isOpen?: boolean;
     onClose?: () => void;
 }
 
-export function Sidebar({ messages = [], isOpen = false, onClose }: SidebarProps) {
+export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, onClose }: SidebarProps) {
     const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
     const currentMetadata = aiMessages.length > 0 ? aiMessages[aiMessages.length - 1].metadata! : [];
+
+    // All unique metadata observed throughout the chat so far
+    const allMetadata = aiMessages.flatMap(m => m.metadata || []);
+
+    // Use active metadata from scroll if available, otherwise use latest message's metadata
+    const displayMetadata = activeMetadata.length > 0 ? activeMetadata : currentMetadata;
 
     return (
         <>
@@ -46,8 +53,8 @@ export function Sidebar({ messages = [], isOpen = false, onClose }: SidebarProps
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                    <ActivePhilosophers metadata={currentMetadata} onPhilosopherClick={() => { /* TODO: Implement philosopher filter using scholar */ }} />
-                    <ContextSources metadata={currentMetadata} />
+                    <ActivePhilosophers metadata={allMetadata} activeMetadata={displayMetadata} onPhilosopherClick={() => { /* TODO: Implement philosopher filter using scholar */ }} />
+                    <ContextSources metadata={displayMetadata} />
                 </div>
 
                 {/* System Status */}

@@ -3,12 +3,14 @@
 import { useState, useCallback } from "react";
 import { Sidebar } from "../components/sidebar/Sidebar";
 import { ChatMain } from "../components/chat/ChatMain";
-import { Message } from "../types/chat";
+import { Message, DocumentMetadata } from "../types/chat";
 
 export default function Home() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [chatTitle, setChatTitle] = useState<string>("미덕에 관한 대화");
+    const [activeMetadata, setActiveMetadata] = useState<DocumentMetadata[]>([]);
 
     const processLine = useCallback((line: string, eventObj: { current: string }, aiMsgId: string): boolean => {
         if (line.startsWith("event: ")) {
@@ -67,13 +69,28 @@ export default function Home() {
         setMessages((prev) => [...prev, newUserMsg, placeholderAiMsg]);
         setIsSubmitting(true);
 
+        const isFirstMessage = messages.length === 0;
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
+        if (isFirstMessage) {
+            fetch(`${baseUrl}/api/v1/chat/title`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ query: query })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.title) setChatTitle(data.title);
+                })
+                .catch(err => console.error("Failed to fetch title:", err));
+        }
+
         try {
             const historyToSend = messages.slice(-10).map(msg => ({
                 role: msg.role,
                 content: msg.content
             }));
 
-            const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/chat`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -152,13 +169,19 @@ export default function Home() {
 
     return (
         <div className="flex h-screen overflow-hidden relative">
-            <Sidebar messages={messages} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <Sidebar messages={messages} activeMetadata={activeMetadata} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             <ChatMain
+                chatTitle={chatTitle}
                 messages={messages}
                 onSendMessage={handleSendMessage}
                 isSubmitting={isSubmitting}
-                onClearChat={() => setMessages([])}
+                onClearChat={() => {
+                    setMessages([]);
+                    setChatTitle("미덕에 관한 대화");
+                    setActiveMetadata([]);
+                }}
                 onMenuClick={() => setIsSidebarOpen(true)}
+                onVisibleMessageChange={setActiveMetadata}
             />
         </div>
     );
