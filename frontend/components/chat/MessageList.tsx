@@ -1,5 +1,5 @@
 import { Sparkles, SquareArrowOutUpRight } from "lucide-react";
-import { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Message, DocumentMetadata } from "../../types/chat";
 
 const DUMMY_COVER_URL = "https://image.aladin.co.kr/product/dummy";
@@ -119,6 +119,18 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         }
     }, []);
 
+    // getMessageRef를 반환하는 대신, 컴포넌트 내부에서 생성한 맵에 의존하지 않는
+    // 컴포넌트 레벨의 메모이제이션 함수로 처리하여 react-hooks/refs 린팅 에러를 방지합니다.
+    const messageRefMap = useRef<Map<string, HTMLDivElement>>(new Map());
+    const setNodeRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
+        if (el) {
+            messageRefMap.current.set(id, el);
+            observeElement(id, el);
+        } else {
+            messageRefMap.current.delete(id);
+        }
+    }, [observeElement]);
+
     if (messages.length === 0) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
@@ -149,7 +161,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                             </div>
                         </div>
                     ) : (
-                        <div key={msg.id} ref={(el) => observeElement(msg.id, el)} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
+                        <div key={msg.id} ref={setNodeRef(msg.id)} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
                             <div className="shrink-0 flex flex-col items-center gap-3">
                                 <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-[#1a1a1e] to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
                                     <Sparkles className="text-primary w-4 h-4 md:w-5 md:h-5" />
@@ -207,7 +219,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                                         <div
                                             key={meta.id}
                                             {...interactiveProps}
-                                            className={`mt-4 flex flex-col gap-0 rounded-xl bg-white/5 border border-white/10 max-w-xl transition-all group/card overflow-hidden ${isClickable ? "hover:border-primary/30 hover:bg-white/[0.07] cursor-pointer" : ""}`}
+                                            className={`mt - 4 flex flex - col gap - 0 rounded - xl bg - white / 5 border border - white / 10 max - w - xl transition - all group / card overflow - hidden ${isClickable ? "hover:border-primary/30 hover:bg-white/[0.07] cursor-pointer" : ""} `}
                                         >
                                             <div className="flex gap-4 p-4">
                                                 <div className="w-16 h-24 shrink-0 bg-[#2a2a2e] flex items-center justify-center rounded-md shadow-[0_2px_8px_rgba(0,0,0,0.5)] overflow-hidden border border-white/5">
