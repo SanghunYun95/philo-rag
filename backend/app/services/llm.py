@@ -4,6 +4,7 @@ import threading
 from pathlib import Path
 import google.generativeai as genai
 from app.core.config import settings
+from app.core.env_utils import parse_gemini_api_keys
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
@@ -14,24 +15,8 @@ _llm_lock = threading.Lock()
 
 def get_all_gemini_keys() -> list[str]:
     """Reads active GEMINI_API_KEY assignments from the root .env file."""
-    keys = []
     env_path = Path(__file__).resolve().parents[3] / ".env"
-    
-    if env_path.exists():
-        with open(env_path, "r", encoding="utf-8") as f:
-            content = f.read()
-            # Find all variations of GEMINI_API_KEY assignments
-            matches = re.findall(
-                r'^\s*GEMINI_API_KEY\s*=\s*(.+?)\s*(?:#.*)?$',
-                content,
-                flags=re.MULTILINE,
-            )
-            for m in matches:
-                # Remove inline comments and strip quotes
-                m = re.split(r'\s+#', m, 1)[0]
-                key = m.strip().strip('"').strip("'")
-                if key and key not in keys:
-                    keys.append(key)
+    keys = parse_gemini_api_keys(env_path)
                     
     # Ensure the one from environment variables/settings is also included
     if getattr(settings, "GEMINI_API_KEY", None) and settings.GEMINI_API_KEY not in keys:

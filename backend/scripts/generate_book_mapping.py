@@ -15,27 +15,14 @@ backend_dir = Path(__file__).resolve().parents[1]
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
+from app.core.env_utils import parse_gemini_api_keys
+
 env_path = backend_dir.parent / ".env"
 print(f"Loading .env from {env_path}, exists: {env_path.exists()}")
 load_dotenv(dotenv_path=env_path)
 
 # Extract ALL GEMINI_API_KEYs from .env file
-api_keys = []
-if env_path.exists():
-    with open(env_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            m = re.match(r'^\s*GEMINI_API_KEY\s*=\s*(.+?)\s*(?:#.*)?$', line)
-            if not m:
-                continue
-            key = m.group(1).strip().strip('"').strip("'")
-            if key and key not in api_keys:
-                api_keys.append(key)
-
-# Fallback to os.environ when parsing produced no key
-if not api_keys:
-    k = os.getenv("GEMINI_API_KEY")
-    if k and k not in api_keys:
-        api_keys.append(k)
+api_keys = parse_gemini_api_keys(env_path)
 
 # The user explicitly asked to start testing from new keys (lines 8~14), and then go back to line 2.
 # Rotates keys only when running with ENABLE_TEST_KEY_ROTATION flag.
@@ -129,7 +116,7 @@ async def search_aladin(title: str, author: str) -> dict:
         return {}
         
     query = f"{title} {author}".strip()
-    url = f"http://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey={ALADIN_API_KEY}&Query={urllib.parse.quote(query)}&QueryType=Keyword&MaxResults=1&start=1&SearchTarget=Book&output=js&Version=20131101"
+    url = f"https://www.aladin.co.kr/ttb/api/ItemSearch.aspx?ttbkey={ALADIN_API_KEY}&Query={urllib.parse.quote(query)}&QueryType=Keyword&MaxResults=1&start=1&SearchTarget=Book&output=js&Version=20131101"
     
     try:
         loop = asyncio.get_running_loop()
