@@ -50,12 +50,16 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                         const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
                         if (aiMessages.length > 0) {
                             onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
+                        } else {
+                            onVisibleMessageChange([]);
                         }
                     }
                 } else {
                     const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
                     if (aiMessages.length > 0) {
                         onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
+                    } else {
+                        onVisibleMessageChange([]);
                     }
                 }
             }

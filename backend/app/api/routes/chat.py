@@ -145,11 +145,13 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
         title = await asyncio.wait_for(generate_chat_title_async(query), timeout=10.0)
         # Handle case where LLM returns something too long or with quotes
         title = title.replace('"', '').replace("'", "").strip()
+        if not title:
+            return {"title": "새로운 대화"}
         if len(title) > 20: # Ensure it's short even if LLM disobeys a bit
             title = title[:20] + "..."
         return {"title": title}
     except asyncio.TimeoutError:
-        logger.warning(f"Timeout generating chat title for query: {query}")
+        logger.warning("Timeout generating chat title")
         return {"title": "새로운 대화"}
     except Exception:
         logger.exception("Failed to generate chat title")
