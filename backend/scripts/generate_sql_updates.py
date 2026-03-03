@@ -12,7 +12,7 @@ def generate_sql():
     # 1. Create a B-Tree index on the title field to make string matching instant
     # instead of doing a full sequential table scan
     sql_statements = [
-        "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_documents_book_title ON documents ((metadata->'book_info'->>'title'));\n\n"
+        "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_documents_book_title ON documents ((metadata->'book_info'->>'title'));\n\n",
         "BEGIN;\n",
         "SET LOCAL statement_timeout = '120s'; -- Increase timeout to be safe for this transaction\n"
     ]
