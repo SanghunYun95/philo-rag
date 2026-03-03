@@ -37,7 +37,7 @@ export function FloatingInput({ onSendMessage, isSubmitting }: FloatingInputProp
                     <textarea
                         id="chat-input"
                         className="w-full bg-transparent border-0 text-white/90 placeholder-white/30 focus:ring-0 p-0 resize-none font-sans leading-relaxed text-sm md:text-base max-h-32 outline-none"
-                        placeholder="미덕, 형이상학 등에 대해 편하게 물어보세요..."
+                        placeholder="당신의 고민이나 궁금한 점을 편하게 자유롭게 물어보세요..."
                         rows={1}
                         style={{ minHeight: "24px" }}
                         value={inputValue}

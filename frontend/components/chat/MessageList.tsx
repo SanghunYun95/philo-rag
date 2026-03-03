@@ -81,9 +81,9 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                 <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-transparent border border-primary/30 flex items-center justify-center mb-6 shadow-xl">
                     <Sparkles className="text-primary w-8 h-8" />
                 </div>
-                <h3 className="font-display text-2xl text-white/90 mb-2">어떤 철학적 고민이 있으신가요?</h3>
+                <h3 className="font-display text-2xl text-white/90 mb-2">무엇이 당신을 사유하게 만드나요?</h3>
                 <p className="text-white/50 max-w-md mx-auto text-sm leading-relaxed">
-                    미덕, 죽음, 사랑, 자아 등 삶의 본질적인 질문들을 과거의 위대한 철학자들과 함께 탐구해보세요.
+                    크고 작은 고민부터 삶의 본질적인 질문까지, 위대한 철학자들의 지혜를 통해 새로운 관점을 발견해보세요.
                 </p>
             </div>
         );
