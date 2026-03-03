@@ -85,6 +85,10 @@ def update_database():
         doc_id = doc['id']
         metadata = doc['metadata']
         
+        if not isinstance(metadata, dict):
+            print(f"Skipping doc {doc_id}: metadata is not a dict")
+            continue
+        
         # The DB stores the title we want to match inside metadata->book_info->title
         db_title = metadata.get('book_info', {}).get('title', '')
         

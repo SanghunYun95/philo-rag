@@ -4,7 +4,7 @@ import { Share, Plus, Menu } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
 import { MessageList } from "./MessageList";
 import { FloatingInput } from "./FloatingInput";
-import { Message } from "../../types/chat";
+import { Message, DocumentMetadata } from "../../types/chat";
 
 interface ChatMainProps {
     messages: Message[];

@@ -111,7 +111,7 @@ async def translate_book_info(file_name: str) -> dict:
                 current_key_idx += 1
             else:
                 print(f"Failed to parse LLM translation for {file_name}: {e}")
-                current_key_idx += 1
+                break
                 
     # If all keys exhausted or other error, fallback
     print(f"LLM Failed for {file_name}, falling back to Kyobo Search...")
@@ -139,7 +139,7 @@ async def search_aladin(title: str, author: str) -> dict:
             item = items[0]
             return {
                 "title": item.get("title", ""),
-                "link": item.get("link", ""),
+                "link": item.get("link", "").replace("&amp;", "&"),
                 "thumbnail": item.get("cover", ""),
                 "author": item.get("author", ""),
                 "isbn": item.get("isbn13", "")

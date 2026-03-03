@@ -1,4 +1,5 @@
 import { Settings, History, User, X } from "lucide-react";
+import { useState } from "react";
 import { ActivePhilosophers } from "./ActivePhilosophers";
 import { ContextSources } from "./ContextSources";
 import { Message, DocumentMetadata } from "../../types/chat";
@@ -11,14 +12,35 @@ interface SidebarProps {
 }
 
 export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, onClose }: SidebarProps) {
+    const [filterScholar, setFilterScholar] = useState<string | null>(null);
+
     const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
     const currentMetadata = aiMessages.length > 0 ? aiMessages[aiMessages.length - 1].metadata! : [];
 
-    // All unique metadata observed throughout the chat so far
-    const allMetadata = aiMessages.flatMap(m => m.metadata || []);
+    // All unique metadata observed throughout the chat so far, deduplicated by id
+    const allMetadata = Array.from(
+        new Map(
+            aiMessages
+                .flatMap(m => m.metadata || [])
+                .map(meta => [meta.id, meta])
+        ).values()
+    );
 
     // Use active metadata from scroll if available, otherwise use latest message's metadata
-    const displayMetadata = activeMetadata.length > 0 ? activeMetadata : currentMetadata;
+    let displayMetadata = activeMetadata.length > 0 ? activeMetadata : currentMetadata;
+
+    // Apply philosophy/scholar filter if active
+    if (filterScholar) {
+        displayMetadata = allMetadata.filter(meta => meta.scholar === filterScholar);
+    }
+
+    const handlePhilosopherClick = (scholar: string) => {
+        if (filterScholar === scholar) {
+            setFilterScholar(null); // Clear filter if clicking the already active one
+        } else {
+            setFilterScholar(scholar);
+        }
+    };
 
     return (
         <>
@@ -53,7 +75,7 @@ export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, on
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                    <ActivePhilosophers metadata={allMetadata} activeMetadata={displayMetadata} onPhilosopherClick={() => { /* TODO: Implement philosopher filter using scholar */ }} />
+                    <ActivePhilosophers metadata={allMetadata} activeMetadata={displayMetadata} onPhilosopherClick={handlePhilosopherClick} />
                     <ContextSources metadata={displayMetadata} />
                 </div>
 

@@ -1,9 +1,9 @@
 CREATE INDEX IF NOT EXISTS idx_documents_book_title ON documents ((metadata->'book_info'->>'title'));
 
 
-SET statement_timeout = '120s'; -- Increase timeout to be safe
-
 BEGIN;
+
+SET LOCAL statement_timeout = '120s'; -- Increase timeout to be safe for this transaction
 
 UPDATE documents
 SET metadata = metadata || '{"kr_title": "역설의 예산 1권", "thumbnail": "", "link": ""}'::jsonb

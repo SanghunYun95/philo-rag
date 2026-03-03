@@ -12,20 +12,6 @@ interface Props {
 }
 
 export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }: Props) {
-    if (messages.length === 0) {
-        return (
-            <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-transparent border border-primary/30 flex items-center justify-center mb-6 shadow-xl">
-                    <Sparkles className="text-primary w-8 h-8" />
-                </div>
-                <h3 className="font-display text-2xl text-white/90 mb-2">어떤 철학적 고민이 있으신가요?</h3>
-                <p className="text-white/50 max-w-md mx-auto text-sm leading-relaxed">
-                    미덕, 죽음, 사랑, 자아 등 삶의 본질적인 질문들을 과거의 위대한 철학자들과 함께 탐구해보세요.
-                </p>
-            </div>
-        );
-    }
-
     const observer = useRef<IntersectionObserver | null>(null);
     const visibleMessages = useRef<Map<string, number>>(new Map());
 
@@ -79,6 +65,20 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
             observer.current?.disconnect();
         };
     }, [messages, onVisibleMessageChange]);
+
+    if (messages.length === 0) {
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-transparent border border-primary/30 flex items-center justify-center mb-6 shadow-xl">
+                    <Sparkles className="text-primary w-8 h-8" />
+                </div>
+                <h3 className="font-display text-2xl text-white/90 mb-2">어떤 철학적 고민이 있으신가요?</h3>
+                <p className="text-white/50 max-w-md mx-auto text-sm leading-relaxed">
+                    미덕, 죽음, 사랑, 자아 등 삶의 본질적인 질문들을 과거의 위대한 철학자들과 함께 탐구해보세요.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full px-4 md:px-8 pt-6 md:pt-10 pb-10">
