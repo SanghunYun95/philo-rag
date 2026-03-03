@@ -106,6 +106,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         if (prev && prev !== el) {
             observer.current?.unobserve(prev);
             pendingElements.current.delete(prev);
+            visibleMessages.current.delete(id);
         }
 
         if (el) {
@@ -114,6 +115,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
             observer.current?.observe(el);
         } else {
             elementById.current.delete(id);
+            visibleMessages.current.delete(id);
         }
     }, []);
 
