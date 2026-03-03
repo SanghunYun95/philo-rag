@@ -123,7 +123,7 @@ def update_database():
                     return True
                 except Exception as e:
                     if attempt < max_retries - 1:
-                        sleep(0.5 * (attempt + 1))  # Exponential backoff
+                        sleep(0.5 * (2 ** attempt))  # Exponential backoff
                         continue
                     print(f"Error updating {doc['id']}: {e}")
                     return False

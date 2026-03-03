@@ -23,7 +23,7 @@ class ChatRequest(BaseModel):
     history: List[HistoryMessage] = Field(default_factory=list)
 
 class TitleRequest(BaseModel):
-    query: str
+    query: str = Field(..., max_length=1024)
 
 def _search_documents(query_vector):
     return get_client().rpc(

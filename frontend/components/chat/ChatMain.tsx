@@ -16,7 +16,7 @@ interface ChatMainProps {
     onVisibleMessageChange?: (meta: DocumentMetadata[]) => void;
 }
 
-export function ChatMain({ messages, chatTitle = "미덕에 관한 대화", onSendMessage, isSubmitting, onClearChat, onMenuClick, onVisibleMessageChange }: ChatMainProps) {
+export function ChatMain({ messages, chatTitle = "새로운 대화", onSendMessage, isSubmitting, onClearChat, onMenuClick, onVisibleMessageChange }: ChatMainProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const [startTime, setStartTime] = useState<string>("");

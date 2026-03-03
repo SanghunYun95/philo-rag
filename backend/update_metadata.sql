@@ -1,4 +1,4 @@
-CREATE INDEX IF NOT EXISTS idx_documents_book_title ON documents ((metadata->'book_info'->>'title'));
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_documents_book_title ON documents ((metadata->'book_info'->>'title'));
 
 
 BEGIN;

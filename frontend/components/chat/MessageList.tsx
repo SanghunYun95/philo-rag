@@ -46,6 +46,11 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                     const msg = messages.find(m => m.id === mostVisibleId);
                     if (msg && msg.metadata && msg.metadata.length > 0) {
                         onVisibleMessageChange(msg.metadata);
+                    } else {
+                        const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
+                        if (aiMessages.length > 0) {
+                            onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
+                        }
                     }
                 } else {
                     const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
@@ -59,7 +64,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         });
 
         const elements = document.querySelectorAll(".ai-message-card");
-        elements.forEach(el => observer.current?.observe(el));
+        elements.forEach(el => { observer.current?.observe(el); });
 
         return () => {
             observer.current?.disconnect();

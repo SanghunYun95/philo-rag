@@ -115,7 +115,11 @@ async def translate_book_info(file_name: str) -> dict:
                 
     # If all keys exhausted or other error, fallback
     print(f"LLM Failed for {file_name}, falling back to Kyobo Search...")
-    return await kyobo_fallback(file_name, "")
+    name_without_ext = Path(file_name).stem
+    parts = name_without_ext.rsplit(" by ", 1)
+    fallback_title = parts[0].strip()
+    fallback_author = parts[1].strip() if len(parts) == 2 else ""
+    return await kyobo_fallback(fallback_title, fallback_author)
 
 async def search_aladin(title: str, author: str) -> dict:
     if not ALADIN_API_KEY:

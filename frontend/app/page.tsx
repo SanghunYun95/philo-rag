@@ -9,7 +9,7 @@ export default function Home() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [chatTitle, setChatTitle] = useState<string>("미덕에 관한 대화");
+    const [chatTitle, setChatTitle] = useState<string>("새로운 대화");
     const [activeMetadata, setActiveMetadata] = useState<DocumentMetadata[]>([]);
 
     const processLine = useCallback((line: string, eventObj: { current: string }, aiMsgId: string): boolean => {
@@ -177,7 +177,7 @@ export default function Home() {
                 isSubmitting={isSubmitting}
                 onClearChat={() => {
                     setMessages([]);
-                    setChatTitle("미덕에 관한 대화");
+                    setChatTitle("새로운 대화");
                     setActiveMetadata([]);
                 }}
                 onMenuClick={() => setIsSidebarOpen(true)}
