@@ -6,13 +6,15 @@ from fastapi import APIRouter, Request, Depends
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
-from app.services.llm import get_english_translation, get_response_stream_async
+from app.services.llm import get_english_translation, get_response_stream_async, generate_chat_title_async
 from app.services.embedding import embedding_service
 from app.services.database import get_client
 from app.core.rate_limit import limiter
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+DEFAULT_CHAT_TITLE = "새로운 대화"
 
 class HistoryMessage(BaseModel):
     role: str
@@ -21,6 +23,9 @@ class HistoryMessage(BaseModel):
 class ChatRequest(BaseModel):
     query: str
     history: List[HistoryMessage] = Field(default_factory=list)
+
+class TitleRequest(BaseModel):
+    query: str = Field(..., max_length=1024)
 
 def _search_documents(query_vector):
     return get_client().rpc(
@@ -127,3 +132,31 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
     Endpoint for accepting chat queries and returning a text/event-stream response.
     """
     return EventSourceResponse(generate_chat_events(request, chat_request.query, chat_request.history))
+
+@router.post("/title")
+@limiter.limit("5/minute")
+async def chat_title_endpoint(request: Request, title_request: TitleRequest):
+    """
+    Endpoint for generating a short chat room title based on the first user query.
+    """
+    query = title_request.query.strip()
+    if not query:
+        return {"title": DEFAULT_CHAT_TITLE}
+
+    try:
+        title = await asyncio.wait_for(generate_chat_title_async(query), timeout=10.0)
+        # Handle case where LLM returns something too long or with quotes
+        title = title.replace('"', '').replace("'", "").strip()
+        if not title:
+            return {"title": DEFAULT_CHAT_TITLE}
+        MAX_TITLE_LEN = 20
+        ELLIPSIS = "..."
+        if len(title) > MAX_TITLE_LEN:
+            title = title[: MAX_TITLE_LEN - len(ELLIPSIS)] + ELLIPSIS
+        return {"title": title}
+    except asyncio.TimeoutError:
+        logger.warning("Timeout generating chat title")
+        return {"title": DEFAULT_CHAT_TITLE}
+    except Exception:
+        logger.exception("Failed to generate chat title")
+        return {"title": DEFAULT_CHAT_TITLE}

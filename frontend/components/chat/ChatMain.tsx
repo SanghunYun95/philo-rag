@@ -4,17 +4,19 @@ import { Share, Plus, Menu } from "lucide-react";
 import { useRef, useEffect, useState } from "react";
 import { MessageList } from "./MessageList";
 import { FloatingInput } from "./FloatingInput";
-import { Message } from "../../types/chat";
+import { Message, DocumentMetadata } from "../../types/chat";
 
 interface ChatMainProps {
     messages: Message[];
+    chatTitle?: string;
     onSendMessage: (query: string) => void;
     isSubmitting: boolean;
     onClearChat: () => void;
     onMenuClick?: () => void;
+    onVisibleMessageChange?: (meta: DocumentMetadata[]) => void;
 }
 
-export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat, onMenuClick }: ChatMainProps) {
+export function ChatMain({ messages, chatTitle = "새로운 대화", onSendMessage, isSubmitting, onClearChat, onMenuClick, onVisibleMessageChange }: ChatMainProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
     const [startTime, setStartTime] = useState<string>("");
@@ -51,7 +53,7 @@ export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat, o
                         <Menu className="w-5 h-5" />
                     </button>
                     <div>
-                        <h2 className="font-display text-xl md:text-3xl text-white/90">미덕에 관한 대화</h2>
+                        <h2 className="font-display text-xl md:text-3xl text-white/90 transition-all duration-300">{chatTitle}</h2>
                         <p className="text-xs md:text-sm text-white/40 mt-1">세션 시작: {mounted ? startTime : ""}</p>
                     </div>
                 </div>
@@ -69,7 +71,7 @@ export function ChatMain({ messages, onSendMessage, isSubmitting, onClearChat, o
 
             {/* Scrollable Message Area */}
             <div className="flex-1 overflow-y-auto w-full relative" onScroll={handleScroll}>
-                <MessageList messages={messages} />
+                <MessageList messages={messages} onVisibleMessageChange={onVisibleMessageChange} />
                 <div ref={messagesEndRef} />
             </div>
 

@@ -1,4 +1,5 @@
 import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { Message, DocumentMetadata } from "../../types/chat";
 
 const DUMMY_COVER_URL = "https://image.aladin.co.kr/product/dummy";
@@ -7,18 +8,91 @@ const DUMMY_BOOK_LINK = "https://www.aladin.co.kr/dummy-link";
 interface Props {
     messages: Message[];
     onOpenCitation?: (meta: DocumentMetadata) => void;
+    onVisibleMessageChange?: (meta: DocumentMetadata[]) => void;
 }
 
-export function MessageList({ messages, onOpenCitation }: Props) {
+export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }: Props) {
+    const observer = useRef<IntersectionObserver | null>(null);
+    const visibleMessages = useRef<Map<string, number>>(new Map());
+
+    useEffect(() => {
+        if (!onVisibleMessageChange) return;
+        visibleMessages.current.clear();
+
+        observer.current = new IntersectionObserver((entries) => {
+            let changed = false;
+            entries.forEach(entry => {
+                const id = entry.target.getAttribute("data-message-id");
+                if (id) {
+                    if (entry.isIntersecting) {
+                        visibleMessages.current.set(id, entry.intersectionRatio);
+                    } else {
+                        visibleMessages.current.delete(id);
+                    }
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                let maxRatio = -1;
+                let mostVisibleId: string | null = null;
+                visibleMessages.current.forEach((ratio, id) => {
+                    if (ratio > maxRatio) {
+                        maxRatio = ratio;
+                        mostVisibleId = id;
+                    }
+                });
+
+                if (mostVisibleId) {
+                    const emitLatestMetadataOrEmpty = () => {
+                        const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
+                        if (aiMessages.length > 0) {
+                            onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
+                        } else {
+                            onVisibleMessageChange([]);
+                        }
+                    };
+
+                    const msg = messages.find(m => m.id === mostVisibleId);
+                    if (msg && msg.metadata && msg.metadata.length > 0) {
+                        onVisibleMessageChange(msg.metadata);
+                    } else {
+                        emitLatestMetadataOrEmpty();
+                    }
+                } else {
+                    const emitLatestMetadataOrEmpty = () => {
+                        const aiMessages = messages.filter(m => m.role === "ai" && m.metadata && m.metadata.length > 0);
+                        if (aiMessages.length > 0) {
+                            onVisibleMessageChange(aiMessages[aiMessages.length - 1].metadata!);
+                        } else {
+                            onVisibleMessageChange([]);
+                        }
+                    };
+                    emitLatestMetadataOrEmpty();
+                }
+            }
+        }, {
+            threshold: [0, 0.25, 0.5, 0.75, 1.0]
+        });
+
+        const elements = document.querySelectorAll(".ai-message-card");
+        elements.forEach(el => { observer.current?.observe(el); });
+
+        return () => {
+            observer.current?.disconnect();
+            visibleMessages.current.clear();
+        };
+    }, [messages, onVisibleMessageChange]);
+
     if (messages.length === 0) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
                 <div className="h-16 w-16 rounded-full bg-gradient-to-br from-primary/20 to-transparent border border-primary/30 flex items-center justify-center mb-6 shadow-xl">
                     <Sparkles className="text-primary w-8 h-8" />
                 </div>
-                <h3 className="font-display text-2xl text-white/90 mb-2">어떤 철학적 고민이 있으신가요?</h3>
+                <h3 className="font-display text-2xl text-white/90 mb-2">무엇이 당신을 사유하게 만드나요?</h3>
                 <p className="text-white/50 max-w-md mx-auto text-sm leading-relaxed">
-                    미덕, 죽음, 사랑, 자아 등 삶의 본질적인 질문들을 과거의 위대한 철학자들과 함께 탐구해보세요.
+                    크고 작은 고민부터 삶의 본질적인 질문까지, 위대한 철학자들의 지혜를 통해 새로운 관점을 발견해보세요.
                 </p>
             </div>
         );
@@ -40,7 +114,7 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                             </div>
                         </div>
                     ) : (
-                        <div key={msg.id} className="flex gap-4 md:gap-6 group">
+                        <div key={msg.id} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
                             <div className="shrink-0 flex flex-col items-center gap-3">
                                 <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-[#1a1a1e] to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
                                     <Sparkles className="text-primary w-4 h-4 md:w-5 md:h-5" />
