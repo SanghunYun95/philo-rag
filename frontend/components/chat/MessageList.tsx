@@ -1,6 +1,9 @@
 import { Sparkles, SquareArrowOutUpRight, ThumbsUp, Copy, RotateCcw } from "lucide-react";
 import { Message, DocumentMetadata } from "../../types/chat";
 
+const DUMMY_COVER_URL = "https://image.aladin.co.kr/product/dummy";
+const DUMMY_BOOK_LINK = "https://www.aladin.co.kr/dummy-link";
+
 interface Props {
     messages: Message[];
     onOpenCitation?: (meta: DocumentMetadata) => void;
@@ -72,7 +75,11 @@ export function MessageList({ messages, onOpenCitation }: Props) {
 
                                 {/* Citation Cards if metadata exists */}
                                 {msg.metadata && msg.metadata.length > 0 && Array.from(new Map(msg.metadata.map((m) => [m.id, m])).values()).map((meta) => {
-                                    const title = meta.book_info.title;
+                                    const title = meta.kr_title || meta.book_info?.title || meta.id;
+                                    // Use newly added 'thumbnail' fallback to cover_url
+                                    const coverUrl = meta.thumbnail || (meta.book_info?.cover_url !== DUMMY_COVER_URL ? meta.book_info?.cover_url : "");
+                                    const bookLink = meta.link || meta.book_info?.link;
+
                                     const isClickable = Boolean(onOpenCitation);
                                     const interactiveProps = isClickable
                                         ? {
@@ -91,34 +98,55 @@ export function MessageList({ messages, onOpenCitation }: Props) {
                                         <div
                                             key={meta.id}
                                             {...interactiveProps}
-                                            className={`mt-8 flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 max-w-xl transition-colors group/card ${isClickable ? "hover:border-primary/30 cursor-pointer" : ""}`}
+                                            className={`mt-4 flex flex-col gap-0 rounded-xl bg-white/5 border border-white/10 max-w-xl transition-all group/card overflow-hidden ${isClickable ? "hover:border-primary/30 hover:bg-white/[0.07] cursor-pointer" : ""}`}
                                         >
-                                            <div className="h-16 w-12 shrink-0 bg-white/10 flex items-center justify-center rounded shadow-inner overflow-hidden">
-                                                {meta.book_info.cover_url && !meta.book_info.cover_url.includes("dummy") ? (
-                                                    <>
-                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                        <img src={meta.book_info.cover_url} alt={title} className="w-full h-full object-cover opacity-80" />
-                                                    </>
-                                                ) : (
-                                                    <span className="font-display text-xl text-primary/60">{meta.scholar.charAt(0)}</span>
+                                            <div className="flex gap-4 p-4">
+                                                <div className="w-16 h-24 shrink-0 bg-[#2a2a2e] flex items-center justify-center rounded-md shadow-[0_2px_8px_rgba(0,0,0,0.5)] overflow-hidden border border-white/5">
+                                                    {coverUrl && !coverUrl.includes("dummy") ? (
+                                                        <>
+                                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                            <img src={coverUrl} alt={title} className="w-full h-full object-cover" />
+                                                        </>
+                                                    ) : (
+                                                        <span className="font-display text-2xl text-primary/40 font-bold">{meta.scholar.charAt(0)}</span>
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0 flex flex-col justify-center py-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/20 text-primary border border-primary/20">Ref</span>
+                                                        <p className="text-white/50 text-xs truncate">
+                                                            {meta.scholar} • {meta.school}
+                                                        </p>
+                                                    </div>
+                                                    <h5 className="text-white/90 font-display text-base font-medium leading-snug line-clamp-2">{title}</h5>
+
+                                                    {bookLink && bookLink !== DUMMY_BOOK_LINK && (
+                                                        <div className="mt-auto pt-2 flex items-center">
+                                                            <a
+                                                                href={bookLink}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                className="inline-flex items-center gap-1.5 text-xs text-primary/80 hover:text-primary transition-colors hover:underline"
+                                                            >
+                                                                도서 정보 보기 <SquareArrowOutUpRight className="w-3 h-3" />
+                                                            </a>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {onOpenCitation && (
+                                                    <div className="self-center pl-2">
+                                                        <button
+                                                            type="button"
+                                                            aria-label={`${title} 참고 문헌 열기`}
+                                                            onClick={(e) => { e.stopPropagation(); onOpenCitation(meta); }}
+                                                            className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center text-white/50 group-hover/card:bg-primary/20 group-hover/card:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all"
+                                                        >
+                                                            <SquareArrowOutUpRight className="w-4 h-4 ml-0.5 mb-0.5" />
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                                <h5 className="text-white font-display text-lg truncate">참조: {title}</h5>
-                                                <p className="text-white/40 text-sm line-clamp-1 mt-1">
-                                                    {meta.scholar} - {meta.school}
-                                                </p>
-                                            </div>
-                                            {onOpenCitation && (
-                                                <button
-                                                    type="button"
-                                                    aria-label={`${title} 참고 문헌 열기`}
-                                                    onClick={(e) => { e.stopPropagation(); onOpenCitation(meta); }}
-                                                    className="h-8 w-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 group-hover/card:bg-primary group-hover/card:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 transition-all self-center"
-                                                >
-                                                    <SquareArrowOutUpRight className="w-4 h-4" />
-                                                </button>
-                                            )}
                                         </div>
                                     )
                                 })}

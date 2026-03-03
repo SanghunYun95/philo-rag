@@ -1,6 +1,10 @@
+import os
+import re
 import threading
+from pathlib import Path
 import google.generativeai as genai
 from app.core.config import settings
+from app.core.env_utils import parse_gemini_api_keys
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
@@ -9,25 +13,56 @@ from langchain_core.output_parsers import StrOutputParser
 _llm = None
 _llm_lock = threading.Lock()
 
+def get_all_gemini_keys() -> list[str]:
+    """Reads active GEMINI_API_KEY assignments from the root .env file."""
+    env_path = Path(__file__).resolve().parents[3] / ".env"
+    keys = parse_gemini_api_keys(env_path)
+                    
+    # Ensure the one from environment variables/settings is also included
+    if getattr(settings, "GEMINI_API_KEY", None) and settings.GEMINI_API_KEY not in keys:
+        keys.insert(0, settings.GEMINI_API_KEY)
+        
+    return keys
+
 def get_llm():
     global _llm
-    if not settings.GEMINI_API_KEY:
-        raise RuntimeError("GEMINI_API_KEY must be configured")
-        
     if _llm is None:
         with _llm_lock:
             if _llm is None:  # Double-checked locking
-                # Configure Gemini API natively (optional, if native SDK features are needed)
-                genai.configure(api_key=settings.GEMINI_API_KEY)
+                keys = get_all_gemini_keys()
                 
-                # Configure LangChain model
-                # TODO: model gemini-2.5-flash will be deprecated by June 17, 2026. Plan migration to gemini-3-flash.
-                _llm = ChatGoogleGenerativeAI(
-                    model="gemini-3-flash", 
-                    google_api_key=settings.GEMINI_API_KEY,
+                if not keys:
+                    raise RuntimeError("No GEMINI_API_KEY found in .env or environment")
+                
+                # Configure Gemini API natively with the first key
+                genai.configure(api_key=keys[0])
+                
+                print(f"Loaded {len(keys)} Gemini API keys for rotation/fallbacks.")
+                
+                # Create the primary model
+                primary_llm = ChatGoogleGenerativeAI(
+                    model="gemini-2.5-flash-lite", 
+                    google_api_key=keys[0],
                     temperature=0.7,
-                    max_retries=2
+                    max_retries=1
                 )
+                
+                if len(keys) > 1:
+                    # Create fallback models with the other keys
+                    fallback_llms = [
+                        ChatGoogleGenerativeAI(
+                            model="gemini-2.5-flash-lite", 
+                            google_api_key=k,
+                            temperature=0.7,
+                            max_retries=1
+                        )
+                        for k in keys[1:]
+                    ]
+                    # LangChain will automatically retry with the next model if one throws an error (e.g. rate limit / quota)
+                    _llm = primary_llm.with_fallbacks(fallback_llms)
+                else:
+                    _llm = primary_llm
+                    
     return _llm
 
 
