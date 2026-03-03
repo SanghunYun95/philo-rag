@@ -15,6 +15,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
     const observer = useRef<IntersectionObserver | null>(null);
     const visibleMessages = useRef<Map<string, number>>(new Map());
     const pendingElements = useRef<Set<HTMLDivElement>>(new Set());
+    const elementById = useRef<Map<string, HTMLDivElement>>(new Map());
 
     const messagesRef = useRef(messages);
     const callbackRef = useRef(onVisibleMessageChange);
@@ -83,19 +84,37 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
 
         // The callback ref `observeElement` guarantees DOM readiness.
         // We observe any elements that rendered before the observer was initialized.
-        pendingElements.current.forEach((el) => observer.current?.observe(el));
+        pendingElements.current.forEach((el) => {
+            observer.current?.observe(el);
+        });
+
+        // Capture ref values for cleanup to satisfy react-hooks/exhaustive-deps
+        const visibleMessagesMap = visibleMessages.current;
+        const pendingElementsSet = pendingElements.current;
+        const elementByIdMap = elementById.current;
 
         return () => {
             observer.current?.disconnect();
-            visibleMessages.current.clear();
-            pendingElements.current.clear();
+            visibleMessagesMap.clear();
+            pendingElementsSet.clear();
+            elementByIdMap.clear();
         };
     }, []); // Empty deps because we rely on refs
 
-    const observeElement = useCallback((el: HTMLDivElement | null) => {
-        if (!el) return;
-        pendingElements.current.add(el);
-        observer.current?.observe(el);
+    const observeElement = useCallback((id: string, el: HTMLDivElement | null) => {
+        const prev = elementById.current.get(id);
+        if (prev && prev !== el) {
+            observer.current?.unobserve(prev);
+            pendingElements.current.delete(prev);
+        }
+
+        if (el) {
+            elementById.current.set(id, el);
+            pendingElements.current.add(el);
+            observer.current?.observe(el);
+        } else {
+            elementById.current.delete(id);
+        }
     }, []);
 
     if (messages.length === 0) {
@@ -128,7 +147,7 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
                             </div>
                         </div>
                     ) : (
-                        <div key={msg.id} ref={observeElement} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
+                        <div key={msg.id} ref={(el) => observeElement(msg.id, el)} data-message-id={msg.id} className="ai-message-card flex gap-4 md:gap-6 group">
                             <div className="shrink-0 flex flex-col items-center gap-3">
                                 <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-[#1a1a1e] to-black border border-primary/30 flex items-center justify-center shadow-[0_0_15px_rgba(217,183,74,0.15)] relative">
                                     <Sparkles className="text-primary w-4 h-4 md:w-5 md:h-5" />

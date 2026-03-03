@@ -9,7 +9,7 @@
 본 애플리케이션은 **Next.js (App Router)** 기반의 프론트엔드와 **FastAPI** 기반의 백엔드로 완전히 분리되어 작동하는 현대적인 마이크로서비스 지향 구조를 가집니다.
 
 ### 프론트엔드 (Frontend)
-- **Framework**: Next.js 14+ (React 18)
+- **Framework**: Next.js 16.1.6 (React 19.2.4)
 - **Styling**: Tailwind CSS, Lucide React (Icons)
 - **Language**: TypeScript
 - **State Management**: React Hooks (`useState`, `useRef`, `useCallback`)
@@ -120,7 +120,7 @@ npm run dev
 The application employs a modern microservices-oriented architecture, completely decoupling the **Next.js (App Router)** frontend from the **FastAPI** backend.
 
 ### Frontend
-- **Framework**: Next.js 14+ (React 18)
+- **Framework**: Next.js 16.1.6 (React 19.2.4)
 - **Styling**: Tailwind CSS, Lucide React (Icons)
 - **Language**: TypeScript
 - **State Management**: Enhanced React Hooks (`useState`, `useRef`, `useCallback`)
