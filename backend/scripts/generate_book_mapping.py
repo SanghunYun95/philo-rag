@@ -99,12 +99,19 @@ async def translate_book_info(file_name: str) -> dict:
             current_key_idx += 1
         except Exception as e:
             error_str = str(e).lower()
-            if "429" in error_str or "quota" in error_str or "exhausted" in error_str or "toomanyrequests" in error_str:
-                print(f"API Key {current_key_idx} exhausted. Switching to next key...")
+            should_rotate = any(
+                token in error_str
+                for token in (
+                    "429", "quota", "exhausted", "toomanyrequests",
+                    "401", "403", "invalid api key", "permission", "unauthenticated",
+                )
+            )
+            if should_rotate:
+                print(f"API Key {current_key_idx} exhausted/invalid. Switching to next key...")
                 current_key_idx += 1
             else:
                 print(f"Failed to parse LLM translation for {file_name}: {e}")
-                break
+                current_key_idx += 1
                 
     # If all keys exhausted or other error, fallback
     print(f"LLM Failed for {file_name}, falling back to Kyobo Search...")
