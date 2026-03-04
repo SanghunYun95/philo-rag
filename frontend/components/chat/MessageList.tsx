@@ -119,7 +119,6 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         } else {
             elementById.current.delete(id);
             visibleMessages.current.delete(id);
-            refCallbackById.current.delete(id);
         }
     }, []);
 

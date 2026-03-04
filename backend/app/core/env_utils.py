@@ -5,8 +5,9 @@ from pathlib import Path
 def parse_gemini_api_keys(env_path: Path) -> list[str]:
     """
     Reads active GEMINI_API_KEY assignments from the given .env file.
-    Only extracts active assignments and strips inline comments and quotes.
-    Also falls back to os.environ if no keys are found in the file.
+    Extracts active assignments and strips inline comments and quotes.
+    Also merges GEMINI_API_KEYS (comma-separated) and GEMINI_API_KEY
+    from os.environ with de-duplication, preserving first-seen order.
     """
     api_keys = []
     
