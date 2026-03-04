@@ -119,14 +119,24 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         } else {
             elementById.current.delete(id);
             visibleMessages.current.delete(id);
-            refCallbackById.current.delete(id);
         }
     }, []);
 
     const getMessageRef = useCallback((id: string) => {
         let cb = refCallbackById.current.get(id);
         if (!cb) {
-            cb = (el) => observeElement(id, el);
+            const nextCb = (el: HTMLDivElement | null) => {
+                observeElement(id, el);
+                if (el === null) {
+                    // Delay cleanup to survive React StrictMode's setup -> cleanup(null) -> setup cycle
+                    Promise.resolve().then(() => {
+                        if (refCallbackById.current.get(id) === nextCb && !elementById.current.has(id)) {
+                            refCallbackById.current.delete(id);
+                        }
+                    });
+                }
+            };
+            cb = nextCb;
             refCallbackById.current.set(id, cb);
         }
         return cb;

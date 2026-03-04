@@ -43,7 +43,7 @@ export function ActivePhilosophers({ metadata, activeMetadata = [] }: Props) {
                                         : "border-white/10 bg-white/5"
                                     }`}
                             >
-                                <div className={`absolute inset-0 bg-gradient-to-r ${isActive ? "from-primary/10" : "from-primary/5"} to-transparent opacity-0 group-hover:opacity-100 transition-opacity`}></div>
+                                <div className={`absolute inset-0 bg-gradient-to-r ${isActive ? "from-primary/10" : "from-primary/5"} to-transparent opacity-0 transition-opacity`}></div>
                                 <div className="relative flex items-center gap-4">
                                     <div
                                         className={`h-12 w-12 shrink-0 rounded-full border ${isActive ? "border-primary/30" : "border-white/20"} bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center shadow-inner`}
@@ -55,7 +55,7 @@ export function ActivePhilosophers({ metadata, activeMetadata = [] }: Props) {
                                         <h4 className={`font-display text-lg ${isActive ? "text-white" : "text-white/80"}`}>{meta.scholar}</h4>
                                         <p className={`text-xs ${isActive ? "text-white/60" : "text-white/40"}`}>{meta.school}</p>
                                     </div>
-                                    <CheckCircle className={`ml-auto w-5 h-5 shrink-0 transition-colors ${isActive ? "text-primary" : "text-primary/20 group-hover:text-primary/50"}`} />
+                                    <CheckCircle className={`ml-auto w-5 h-5 shrink-0 transition-colors ${isActive ? "text-primary" : "text-primary/20"}`} />
                                 </div>
                             </div>
                         );
