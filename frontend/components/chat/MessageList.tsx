@@ -119,14 +119,19 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         } else {
             elementById.current.delete(id);
             visibleMessages.current.delete(id);
-            refCallbackById.current.delete(id);
         }
     }, []);
 
     const getMessageRef = useCallback((id: string) => {
         let cb = refCallbackById.current.get(id);
         if (!cb) {
-            cb = (el) => observeElement(id, el);
+            const nextCb = (el: HTMLDivElement | null) => {
+                observeElement(id, el);
+                if (el === null && refCallbackById.current.get(id) === nextCb) {
+                    refCallbackById.current.delete(id);
+                }
+            };
+            cb = nextCb;
             refCallbackById.current.set(id, cb);
         }
         return cb;

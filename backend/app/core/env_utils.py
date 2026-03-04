@@ -35,7 +35,7 @@ def parse_gemini_api_keys(env_path: Path) -> list[str]:
             if k and k not in api_keys:
                 api_keys.append(k)
                 
-    # Fallback to single GEMINI_API_KEY when parsing produced no key or file doesn't exist
+    # Also merge single GEMINI_API_KEY from environment (if present)
     k = os.getenv("GEMINI_API_KEY")
     if k and k not in api_keys:
         api_keys.append(k)

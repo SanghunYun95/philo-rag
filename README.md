@@ -163,6 +163,15 @@ The core Q&A pipeline operates as follows:
 - **Scroll-Responsive Context Sidebar**: If the conversation grows long and the user scrolls up to an older AI response, the left sidebar automatically reads the metadata for that exact message and updates the sources visually (`IntersectionObserver`).
 - **High-Speed Streaming UX**: Addressing the common latency issue of RAG pipelines by actively streaming tokens the moment the LLM begins generation.
 
+## 💡 Usage Examples
+
+1. **Question about Happiness**: "What do you think true happiness is?"
+   - Result: AI searches various philosophical books in the database and streams a real-time answer based on insights from multiple philosophers regarding 'happiness'.
+2. **Ethical Dilemma Question**: "Can lying in human relationships ever be justified?"
+   - Result: Source cards related to morality or ethics (with book covers and metadata pre-loaded) appear on the right pane, while a structured answer combining different perspectives is streamed.
+3. **Social Question**: "What should an ideal and equal state look like?"
+   - Result: Uses the RAG pipeline to locate metadata on political/social philosophy books and provides a direct, multifaceted answer.
+
 ---
 
 ## 💻 How to Run (Local Setup)
