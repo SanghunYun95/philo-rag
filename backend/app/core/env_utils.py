@@ -3,6 +3,9 @@ import re
 from pathlib import Path
 
 def parse_gemini_api_keys(env_path: Path) -> list[str]:
+    def _normalize_key(value: str) -> str:
+        return value.strip().strip('"').strip("'") if value else ""
+
     """
     Reads active GEMINI_API_KEY assignments from the given .env file.
     Extracts active assignments and strips inline comments and quotes.
@@ -23,7 +26,7 @@ def parse_gemini_api_keys(env_path: Path) -> list[str]:
             for m in matches:
                 # Remove inline comments and strip quotes
                 m = re.split(r'\s+#', m, 1)[0]
-                key = m.strip().strip('"').strip("'")
+                key = _normalize_key(m)
                 if key and key not in api_keys:
                     api_keys.append(key)
                     
@@ -32,15 +35,15 @@ def parse_gemini_api_keys(env_path: Path) -> list[str]:
     env_keys_str = os.getenv("GEMINI_API_KEYS")
     if env_keys_str:
         for k in env_keys_str.split(','):
-            k = k.strip().strip('"').strip("'")
-            if k and k not in api_keys:
-                api_keys.append(k)
+            key = _normalize_key(k)
+            if key and key not in api_keys:
+                api_keys.append(key)
                 
     # Also merge single GEMINI_API_KEY from environment (if present)
     k = os.getenv("GEMINI_API_KEY")
     if k:
-        k = k.strip().strip('"').strip("'")
-        if k and k not in api_keys:
-            api_keys.append(k)
+        key = _normalize_key(k)
+        if key and key not in api_keys:
+            api_keys.append(key)
             
     return api_keys

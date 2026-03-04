@@ -127,8 +127,13 @@ export function MessageList({ messages, onOpenCitation, onVisibleMessageChange }
         if (!cb) {
             const nextCb = (el: HTMLDivElement | null) => {
                 observeElement(id, el);
-                if (el === null && refCallbackById.current.get(id) === nextCb) {
-                    refCallbackById.current.delete(id);
+                if (el === null) {
+                    // Delay cleanup to survive React StrictMode's setup -> cleanup(null) -> setup cycle
+                    Promise.resolve().then(() => {
+                        if (refCallbackById.current.get(id) === nextCb && !elementById.current.has(id)) {
+                            refCallbackById.current.delete(id);
+                        }
+                    });
                 }
             };
             cb = nextCb;
