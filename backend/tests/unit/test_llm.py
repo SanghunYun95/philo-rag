@@ -25,9 +25,10 @@ def setup_test_env(monkeypatch):
     except ImportError:
         pass
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
-def test_translation():
+@pytest.mark.asyncio
+async def test_translation():
     print("Testing translation...")
     from app.services.llm import get_english_translation
     with patch("app.services.llm.translation_prompt") as mock_prompt, \
@@ -37,14 +38,14 @@ def test_translation():
         _mock_llm = MagicMock()
         mock_get_llm.return_value = _mock_llm
         mock_chain = MagicMock()
-        mock_chain.invoke.return_value = "Translated Text"
+        mock_chain.ainvoke = AsyncMock(return_value="Translated Text")
         mock_chain.__or__.return_value = mock_chain
         mock_prompt.__or__.return_value = mock_chain
         
-        translated = get_english_translation("미덕이란 무엇인가?")
+        translated = await get_english_translation("미덕이란 무엇인가?")
         print("Translation:", translated)
         assert translated == "Translated Text", "Translation output mocked mismatch"
-        mock_chain.invoke.assert_called_once_with({"query": "미덕이란 무엇인가?"})
+        mock_chain.ainvoke.assert_called_once_with({"query": "미덕이란 무엇인가?"})
 
 def test_streaming():
     print("Testing streaming...")

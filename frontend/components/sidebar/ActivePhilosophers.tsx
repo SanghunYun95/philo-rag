@@ -43,7 +43,7 @@ export function ActivePhilosophers({ metadata, activeMetadata = [] }: Props) {
                                         : "border-white/10 bg-white/5"
                                     }`}
                             >
-                                <div className={`absolute inset-0 bg-gradient-to-r ${isActive ? "from-primary/10" : "from-primary/5"} to-transparent opacity-0 transition-opacity`}></div>
+                                <div className={`absolute inset-0 bg-gradient-to-r ${isActive ? "from-primary/10 opacity-100" : "from-primary/5 opacity-0"} to-transparent transition-opacity`}></div>
                                 <div className="relative flex items-center gap-4">
                                     <div
                                         className={`h-12 w-12 shrink-0 rounded-full border ${isActive ? "border-primary/30" : "border-white/20"} bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center shadow-inner`}

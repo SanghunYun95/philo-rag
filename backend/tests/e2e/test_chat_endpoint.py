@@ -10,7 +10,7 @@ def test_health_check():
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
 
-@patch("app.api.routes.chat.embedding_service.generate_embedding")
+@patch("app.api.routes.chat.embedding_service.agenerate_embedding")
 @patch("app.api.routes.chat._search_documents")
 @patch("app.api.routes.chat.get_english_translation")
 @patch("app.api.routes.chat.get_response_stream_async")

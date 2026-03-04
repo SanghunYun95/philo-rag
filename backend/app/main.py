@@ -20,8 +20,9 @@ async def lifespan(app: FastAPI):
         embedding_service.embeddings
         get_llm()
         logger.info("Pre-loading successful.")
-    except Exception as e:
-        logger.error(f"Failed to pre-load models: {e}")
+    except Exception:
+        logger.exception("Failed to pre-load models")
+        raise
     yield
 
 app = FastAPI(

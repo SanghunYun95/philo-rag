@@ -40,7 +40,14 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     """
     # 1. Translate Korean query to English // Note: We don't translate history here to save costs and reduce latency
     try:
-        english_query = await get_english_translation(query)
+        english_query = await asyncio.wait_for(
+            get_english_translation(query),
+            timeout=10.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Translation timed out")
+        yield {"event": "error", "data": "응답이 지연되고 있어요. 잠시 후 다시 시도해 주세요."}
+        return
     except Exception:
         logger.exception("Failed to translate query")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
