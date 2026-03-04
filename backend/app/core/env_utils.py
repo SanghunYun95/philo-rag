@@ -3,18 +3,17 @@ import re
 from pathlib import Path
 
 def parse_gemini_api_keys(env_path: Path) -> list[str]:
-    def _normalize_key(value: str) -> str:
-        return value.strip().strip('"').strip("'") if value else ""
-
     """
     Reads active GEMINI_API_KEY assignments from the given .env file.
     Extracts active assignments and strips inline comments and quotes.
     Also merges GEMINI_API_KEYS (comma-separated) and GEMINI_API_KEY
     from os.environ with de-duplication, preserving first-seen order.
     """
+    def _normalize_key(value: str) -> str:
+        return value.strip().strip('"').strip("'") if value else ""
     api_keys = []
     
-    if env_path.exists():
+    if env_path.is_file():
         with open(env_path, 'r', encoding='utf-8') as f:
             content = f.read()
             # Find all variations of GEMINI_API_KEY assignments
