@@ -5,11 +5,30 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.routes import chat
 from app.core.rate_limit import limiter
+from contextlib import asynccontextmanager
+import logging
+
+logger = logging.getLogger(__name__)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Pre-load embedding model and LLM during startup
+    logger.info("Pre-loading models during startup...")
+    try:
+        from app.services.embedding import embedding_service
+        from app.services.llm import get_llm
+        embedding_service.embeddings
+        get_llm()
+        logger.info("Pre-loading successful.")
+    except Exception as e:
+        logger.error(f"Failed to pre-load models: {e}")
+    yield
 
 app = FastAPI(
     title="PhiloRAG API",
     description="Backend API for PhiloRAG chatbot system",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Register rate limiter

@@ -39,5 +39,14 @@ class EmbeddingService:
             )
         return embedding
 
+    async def agenerate_embedding(self, text: str) -> list[float]:
+        """Async version of vector embedding generation."""
+        embedding = await self.embeddings.aembed_query(text)
+        if len(embedding) != 384:
+            raise ValueError(
+                f"Unexpected embedding dimension: {len(embedding)} (expected 384)"
+            )
+        return embedding
+
 # Singleton instance
 embedding_service = EmbeddingService()

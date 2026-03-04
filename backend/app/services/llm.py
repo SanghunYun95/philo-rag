@@ -74,12 +74,12 @@ translation_prompt = PromptTemplate.from_template(
     Translation: """
 )
 
-def get_english_translation(korean_query: str) -> str:
+async def get_english_translation(korean_query: str) -> str:
     """
     Translates a Korean query to English using Gemini via LangChain.
     """
     chain = translation_prompt | get_llm() | StrOutputParser()
-    return chain.invoke({"query": korean_query})
+    return await chain.ainvoke({"query": korean_query})
 
 def get_rag_prompt() -> PromptTemplate:
     """
