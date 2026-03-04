@@ -26,10 +26,18 @@ def parse_gemini_api_keys(env_path: Path) -> list[str]:
                 if key and key not in api_keys:
                     api_keys.append(key)
                     
-    # Fallback to os.environ when parsing produced no key or file doesn't exist
-    if not api_keys:
-        k = os.getenv("GEMINI_API_KEY")
-        if k and k not in api_keys:
-            api_keys.append(k)
+    # Also check GEMINI_API_KEYS (comma-separated list) from environment variables
+    # This is highly useful for deployment environments like Render
+    env_keys_str = os.getenv("GEMINI_API_KEYS")
+    if env_keys_str:
+        for k in env_keys_str.split(','):
+            k = k.strip()
+            if k and k not in api_keys:
+                api_keys.append(k)
+                
+    # Fallback to single GEMINI_API_KEY when parsing produced no key or file doesn't exist
+    k = os.getenv("GEMINI_API_KEY")
+    if k and k not in api_keys:
+        api_keys.append(k)
             
     return api_keys
