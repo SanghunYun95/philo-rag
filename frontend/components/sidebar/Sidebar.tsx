@@ -45,7 +45,7 @@ export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, on
                 <div className="p-6 border-b border-white/5 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="h-10 w-10 shrink-0 relative flex items-center justify-center">
-                            <Image src="/icon.png" alt="PhiloRAG Logo" fill className="rounded-full object-cover shadow-[0_0_15px_rgba(217,183,74,0.3)] border border-[#d9b74a]/30" />
+                            <Image src="/icon.png" alt="PhiloRAG Logo" fill sizes="40px" className="rounded-full object-cover shadow-[0_0_15px_rgba(217,183,74,0.3)] border border-[#d9b74a]/30" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <h1 className="font-display text-2xl font-medium tracking-tight text-white truncate">PhiloRAG</h1>
