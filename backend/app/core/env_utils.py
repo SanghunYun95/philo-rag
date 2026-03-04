@@ -31,13 +31,15 @@ def parse_gemini_api_keys(env_path: Path) -> list[str]:
     env_keys_str = os.getenv("GEMINI_API_KEYS")
     if env_keys_str:
         for k in env_keys_str.split(','):
-            k = k.strip()
+            k = k.strip().strip('"').strip("'")
             if k and k not in api_keys:
                 api_keys.append(k)
                 
     # Also merge single GEMINI_API_KEY from environment (if present)
     k = os.getenv("GEMINI_API_KEY")
-    if k and k not in api_keys:
-        api_keys.append(k)
+    if k:
+        k = k.strip().strip('"').strip("'")
+        if k and k not in api_keys:
+            api_keys.append(k)
             
     return api_keys
