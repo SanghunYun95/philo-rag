@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EXPECTED_EMBEDDING_DIM = 384
 
 class EmbeddingService:
     def __init__(self):
@@ -27,9 +28,9 @@ class EmbeddingService:
         return self._embeddings
         
     def _validate_embedding_dimension(self, embedding: list[float]) -> None:
-        if len(embedding) != 384:
+        if len(embedding) != EXPECTED_EMBEDDING_DIM:
             raise ValueError(
-                f"Unexpected embedding dimension: {len(embedding)} (expected 384)"
+                f"Unexpected embedding dimension: {len(embedding)} (expected {EXPECTED_EMBEDDING_DIM})"
             )
 
     def generate_embedding(self, text: str) -> list[float]:

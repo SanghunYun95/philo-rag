@@ -11,14 +11,14 @@ import logging
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     # Pre-load embedding model and LLM during startup
     logger.info("Pre-loading models during startup...")
     try:
         from app.services.embedding import embedding_service
         from app.services.llm import get_llm
-        embedding_service.embeddings
-        get_llm()
+        _ = embedding_service.embeddings
+        _ = get_llm()
         logger.info("Pre-loading successful.")
     except Exception:
         logger.exception("Failed to pre-load models")
