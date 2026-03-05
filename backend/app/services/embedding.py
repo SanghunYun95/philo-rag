@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EXPECTED_EMBEDDING_DIM = 384
 
 class EmbeddingService:
     def __init__(self):
@@ -26,6 +27,12 @@ class EmbeddingService:
                     logger.info("Local embedding model loaded successfully.")
         return self._embeddings
         
+    def _validate_embedding_dimension(self, embedding: list[float]) -> None:
+        if len(embedding) != EXPECTED_EMBEDDING_DIM:
+            raise ValueError(
+                f"Unexpected embedding dimension: {len(embedding)} (expected {EXPECTED_EMBEDDING_DIM})"
+            )
+
     def generate_embedding(self, text: str) -> list[float]:
         """
         Generates a vector embedding for the given text using the HuggingFace model.
@@ -33,10 +40,13 @@ class EmbeddingService:
         """
         # The embed_query method returns a list of floats
         embedding = self.embeddings.embed_query(text)
-        if len(embedding) != 384:
-            raise ValueError(
-                f"Unexpected embedding dimension: {len(embedding)} (expected 384)"
-            )
+        self._validate_embedding_dimension(embedding)
+        return embedding
+
+    async def agenerate_embedding(self, text: str) -> list[float]:
+        """Async version of vector embedding generation."""
+        embedding = await self.embeddings.aembed_query(text)
+        self._validate_embedding_dimension(embedding)
         return embedding
 
 # Singleton instance

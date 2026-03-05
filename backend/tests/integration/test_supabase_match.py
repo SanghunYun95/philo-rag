@@ -9,7 +9,7 @@ from app.services.embedding import embedding_service
 @pytest.mark.asyncio
 async def test_supabase_match_integration():
     # 1. We mock the embedding service to return a dummy vector
-    with patch("app.api.routes.chat.embedding_service.generate_embedding") as mock_embed, \
+    with patch("app.api.routes.chat.embedding_service.agenerate_embedding") as mock_embed, \
          patch("app.api.routes.chat._search_documents") as mock_search, \
          patch("app.api.routes.chat.get_english_translation") as mock_translate, \
          patch("app.api.routes.chat.get_response_stream_async") as mock_stream:
