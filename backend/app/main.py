@@ -10,19 +10,26 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import asyncio
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Pre-load embedding model and LLM during startup
-    logger.info("Pre-loading models during startup...")
-    try:
-        from app.services.embedding import embedding_service
-        from app.services.llm import get_llm
-        _ = embedding_service.embeddings
-        _ = get_llm()
-        logger.info("Pre-loading successful.")
-    except Exception:
-        logger.exception("Failed to pre-load models")
-        raise
+    # Pre-load embedding model and LLM during startup in a background thread
+    logger.info("Pre-loading models in background during startup...")
+    
+    def preload_models():
+        try:
+            from app.services.embedding import embedding_service
+            from app.services.llm import get_llm
+            _ = embedding_service.embeddings
+            _ = get_llm()
+            logger.info("Pre-loading successful.")
+        except Exception:
+            logger.exception("Failed to pre-load models")
+            raise
+
+    # Run in a background thread to avoid blocking the Uvicorn port binding on Render
+    asyncio.get_event_loop().run_in_executor(None, preload_models)
     yield
 
 app = FastAPI(
