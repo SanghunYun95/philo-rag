@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -30,6 +31,9 @@ async def lifespan(_app: FastAPI):
     
     def _on_preload_done(task: asyncio.Task):
         try:
+            if task.cancelled():
+                logger.warning("Preload task was cancelled")
+                return
             task.result()
         except Exception:
             logger.exception("Failed to pre-load models")
@@ -71,3 +75,14 @@ app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.get("/ready")
+async def readiness_check():
+    preload_task = getattr(app.state, "preload_task", None)
+    if preload_task is None or not preload_task.done():
+        return JSONResponse({"status": "not_ready"}, status_code=503)
+    try:
+        preload_task.result()  # re-raises if failed
+        return {"status": "ready"}
+    except Exception:
+        return JSONResponse({"status": "failed"}, status_code=503)
