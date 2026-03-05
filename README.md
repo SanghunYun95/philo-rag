@@ -1,5 +1,7 @@
 # Philo-RAG (철학자와의 대화)
 
+**실제 배포된 사이트 URL:** https://philo-rag.vercel.app/
+
 **Philo-RAG**는 위대한 철학자들의 저술과 사상을 바탕으로, 사용자의 질문에 답변을 제공하는 대화형 RAG(Retrieval-Augmented Generation) 웹 애플리케이션입니다.
 
 ---

@@ -58,10 +58,7 @@ export function ChatMain({ messages, chatTitle = "새로운 대화", onSendMessa
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => alert("준비 중입니다.")} className="hidden sm:flex px-4 py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors items-center gap-2">
-                        <Share className="w-4 h-4" />
-                        내보내기
-                    </button>
+
                     <button onClick={onClearChat} className="p-2 sm:px-4 sm:py-2 rounded-full bg-white/5 border border-white/10 text-white/60 text-sm hover:bg-white/10 hover:text-white transition-colors flex items-center gap-2">
                         <Plus className="w-4 h-4 md:w-4 md:h-4" />
                         <span className="hidden sm:inline">새 대화</span>
