@@ -35,7 +35,15 @@ async def lifespan(_app: FastAPI):
             logger.exception("Failed to pre-load models")
             
     preload_task.add_done_callback(_on_preload_done)
-    yield
+    try:
+        yield
+    finally:
+        if not preload_task.done():
+            try:
+                # Use wait_for to shield and wait so we don't aggressively cancel a thread that might hang
+                await asyncio.wait_for(asyncio.shield(preload_task), timeout=3.0)
+            except asyncio.TimeoutError:
+                logger.warning("Preload task did not finish before shutdown.")
 
 app = FastAPI(
     title="PhiloRAG API",
