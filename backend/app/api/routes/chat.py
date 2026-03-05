@@ -6,8 +6,6 @@ from fastapi import APIRouter, Request, Depends
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 
-from app.services.llm import get_english_translation, get_response_stream_async, generate_chat_title_async
-from app.services.embedding import embedding_service
 from app.services.database import get_client
 from app.core.rate_limit import limiter
 
@@ -38,6 +36,9 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     Generator function that streams SSE events.
     It yields 'metadata' first, then chunks of 'content'.
     """
+    from app.services.llm import get_english_translation, get_response_stream_async
+    from app.services.embedding import embedding_service
+    
     # 1. Translate Korean query to English // Note: We don't translate history here to save costs and reduce latency
     try:
         english_query = await asyncio.wait_for(
@@ -153,6 +154,8 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
     """
     Endpoint for generating a short chat room title based on the first user query.
     """
+    from app.services.llm import generate_chat_title_async
+    
     query = title_request.query.strip()
     if not query:
         return {"title": DEFAULT_CHAT_TITLE}

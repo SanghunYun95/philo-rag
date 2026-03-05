@@ -6,6 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.api.routes import chat
 from app.core.rate_limit import limiter
+import asyncio
 from contextlib import asynccontextmanager
 import logging
 
@@ -48,6 +49,8 @@ async def lifespan(_app: FastAPI):
                 await asyncio.wait_for(asyncio.shield(preload_task), timeout=3.0)
             except asyncio.TimeoutError:
                 logger.warning("Preload task did not finish before shutdown.")
+            except Exception as e:
+                logger.exception("Exception occurred while waiting for preload task during shutdown.")
 
 app = FastAPI(
     title="PhiloRAG API",
@@ -83,10 +86,13 @@ async def readiness_check():
         return JSONResponse({"status": "not_ready"}, status_code=503)
         
     if preload_task.cancelled():
+        logger.warning("Preload task was cancelled during readiness check")
         return JSONResponse({"status": "failed"}, status_code=503)
         
     try:
         preload_task.result()  # re-raises if failed
-        return {"status": "ready"}
-    except Exception:
+    except Exception as e:
+        logger.warning("Preload task failed during readiness check: %s", e)
         return JSONResponse({"status": "failed"}, status_code=503)
+    else:
+        return {"status": "ready"}

@@ -10,10 +10,10 @@ def test_health_check():
     assert response.status_code == 200
     assert response.json() == {"status": "healthy"}
 
-@patch("app.api.routes.chat.embedding_service.agenerate_embedding")
+@patch("app.services.embedding.EmbeddingService.agenerate_embedding")
 @patch("app.api.routes.chat._search_documents")
-@patch("app.api.routes.chat.get_english_translation")
-@patch("app.api.routes.chat.get_response_stream_async")
+@patch("app.services.llm.get_english_translation")
+@patch("app.services.llm.get_response_stream_async")
 def test_chat_endpoint_success(mock_stream, mock_translate, mock_search, mock_embed):
     # Setup mocks
     mock_translate.return_value = "What is life?"
