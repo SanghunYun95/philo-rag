@@ -18,18 +18,23 @@ async def lifespan(_app: FastAPI):
     logger.info("Pre-loading models in background during startup...")
     
     def preload_models():
-        try:
-            from app.services.embedding import embedding_service
-            from app.services.llm import get_llm
-            _ = embedding_service.embeddings
-            _ = get_llm()
-            logger.info("Pre-loading successful.")
-        except Exception:
-            logger.exception("Failed to pre-load models")
-            raise
+        from app.services.embedding import embedding_service
+        from app.services.llm import get_llm
+        _ = embedding_service.embeddings
+        _ = get_llm()
+        logger.info("Pre-loading successful.")
 
     # Run in a background thread to avoid blocking the Uvicorn port binding on Render
-    asyncio.get_event_loop().run_in_executor(None, preload_models)
+    preload_task = asyncio.create_task(asyncio.to_thread(preload_models))
+    _app.state.preload_task = preload_task
+    
+    def _on_preload_done(task: asyncio.Task):
+        try:
+            task.result()
+        except Exception:
+            logger.exception("Failed to pre-load models")
+            
+    preload_task.add_done_callback(_on_preload_done)
     yield
 
 app = FastAPI(

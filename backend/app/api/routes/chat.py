@@ -55,7 +55,14 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     
     # 2. Generate vector representation
     try:
-        query_vector = await embedding_service.agenerate_embedding(english_query)
+        query_vector = await asyncio.wait_for(
+            embedding_service.agenerate_embedding(english_query),
+            timeout=10.0,
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Embedding generation timed out")
+        yield {"event": "error", "data": "응답이 지연되고 있어요. 잠시 후 다시 시도해 주세요."}
+        return
     except Exception:
         logger.exception("Failed to generate query embedding")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
