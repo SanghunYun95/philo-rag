@@ -88,7 +88,8 @@ async def readiness_check():
         
     try:
         preload_task.result()  # re-raises if failed
-        return {"status": "ready"}
     except Exception:
         logger.exception("Preload task failed during readiness check")
         return JSONResponse({"status": "failed"}, status_code=503)
+    else:
+        return {"status": "ready"}
