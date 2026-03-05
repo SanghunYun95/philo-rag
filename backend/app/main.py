@@ -83,10 +83,12 @@ async def readiness_check():
         return JSONResponse({"status": "not_ready"}, status_code=503)
         
     if preload_task.cancelled():
+        logger.warning("Preload task was cancelled during readiness check")
         return JSONResponse({"status": "failed"}, status_code=503)
         
     try:
         preload_task.result()  # re-raises if failed
         return {"status": "ready"}
     except Exception:
+        logger.exception("Preload task failed during readiness check")
         return JSONResponse({"status": "failed"}, status_code=503)
