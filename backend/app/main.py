@@ -81,6 +81,10 @@ async def readiness_check():
     preload_task = getattr(app.state, "preload_task", None)
     if preload_task is None or not preload_task.done():
         return JSONResponse({"status": "not_ready"}, status_code=503)
+        
+    if preload_task.cancelled():
+        return JSONResponse({"status": "failed"}, status_code=503)
+        
     try:
         preload_task.result()  # re-raises if failed
         return {"status": "ready"}
