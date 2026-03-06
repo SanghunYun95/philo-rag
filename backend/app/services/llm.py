@@ -134,10 +134,18 @@ async def get_response_stream_async(context: str, query: str, history: str = "")
     except asyncio.TimeoutError:
         import logging
         logger = logging.getLogger(__name__)
-        logger.warning(f"LLM stream chunk timed out after 30 seconds. Query: {query}")
+        logger.warning(
+            f"LLM stream chunk timed out after 30 seconds (query_length={len(query)})"
+        )
         raise
     finally:
-        await generator.aclose()
+        try:
+            await generator.aclose()
+        except Exception:
+            import logging
+            logging.getLogger(__name__).debug(
+                "LLM stream generator close failed", exc_info=True
+            )
 
 title_prompt = PromptTemplate.from_template(
     """주어진 질문을 기반으로 철학적인 대화방 제목을 15자 이내로 지어줘.
