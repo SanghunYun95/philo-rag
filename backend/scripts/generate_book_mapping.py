@@ -8,21 +8,19 @@ from dotenv import load_dotenv
 import urllib.request
 import urllib.parse
 import urllib.error
-import google.generativeai as genai
-from google.api_core.exceptions import ResourceExhausted
+from app.core.env_utils import parse_openai_api_keys
+from langchain_openai import ChatOpenAI
 
 backend_dir = Path(__file__).resolve().parents[1]
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.core.env_utils import parse_gemini_api_keys
-
 env_path = backend_dir.parent / ".env"
 print(f"Loading .env from {env_path}, exists: {env_path.exists()}")
 load_dotenv(dotenv_path=env_path)
 
-# Extract ALL GEMINI_API_KEYs from .env file
-api_keys = parse_gemini_api_keys(env_path)
+# Extract ALL OPENAI_API_KEYs from .env file
+api_keys = parse_openai_api_keys(env_path)
 
 # The user explicitly asked to start testing from new keys (lines 8~14), and then go back to line 2.
 # Rotates keys only when running with ENABLE_TEST_KEY_ROTATION flag.
@@ -80,23 +78,14 @@ async def translate_book_info(file_name: str) -> dict:
     
     while current_key_idx < len(api_keys):
         key = api_keys[current_key_idx]
-        genai.configure(api_key=key)
-        # Using gemini-2.5-flash-lite as it has a higher free tier
-        model = genai.GenerativeModel("gemini-2.5-flash-lite")
+        llm = ChatOpenAI(model="gpt-4o-mini", api_key=key, temperature=0.7)
         
         try:
-            response = await model.generate_content_async(
-                prompt_template.format(file_name=file_name),
-                generation_config=genai.types.GenerationConfig(temperature=0.7)
-            )
-            result_text = response.text
+            response = await llm.ainvoke(prompt_template.format(file_name=file_name))
+            result_text = response.content
             clean_text = result_text.replace("```json", "").replace("```", "").strip()
             data = json.loads(clean_text)
             return {"kr_title": data["title"], "kr_author": data["author"]}
-            
-        except ResourceExhausted:
-            print(f"API Key {current_key_idx} exhausted. Switching to next key...")
-            current_key_idx += 1
         except Exception as e:
             error_str = str(e).lower()
             should_rotate = any(
