@@ -89,8 +89,8 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         documents = response.data or []
         t5 = time.perf_counter()
         logger.info(f"Database search successful in {t5 - t4:.2f}s. Found {len(documents)} docs.")
-    except Exception as e:
-        logger.exception(f"Database search failed: {e}")
+    except Exception:
+        logger.exception("Database search failed")
         yield {"event": "error", "data": "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."}
         return
         
@@ -193,6 +193,7 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
     if not query:
         return {"title": DEFAULT_CHAT_TITLE}
 
+    t_start = time.perf_counter()
     try:
         title = await asyncio.wait_for(generate_chat_title_async(query), timeout=CHAT_TIMEOUT)
         # Handle case where LLM returns something too long or with quotes
@@ -205,7 +206,7 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
             title = title[: MAX_TITLE_LEN - len(ELLIPSIS)] + ELLIPSIS
         return {"title": title}
     except asyncio.TimeoutError:
-        logger.warning(f"Timeout generating chat title after {CHAT_TIMEOUT}s")
+        logger.warning(f"Timeout generating chat title after {time.perf_counter() - t_start:.2f}s")
         return {"title": DEFAULT_CHAT_TITLE}
     except Exception:
         logger.exception("Failed to generate chat title")
