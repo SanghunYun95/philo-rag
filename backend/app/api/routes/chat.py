@@ -1,6 +1,7 @@
 import json
 import asyncio
 import logging
+import time
 from typing import List, Dict, Optional
 from fastapi import APIRouter, Request, Depends
 from pydantic import BaseModel, Field
@@ -40,13 +41,16 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     from app.services.embedding import embedding_service
     
     # 1. Translate Korean query to English // Note: We don't translate history here to save costs and reduce latency
+    t0 = time.perf_counter()
     try:
         english_query = await asyncio.wait_for(
             get_english_translation(query),
-            timeout=10.0,
+            timeout=30.0,
         )
+        t1 = time.perf_counter()
+        logger.info(f"Translation successful in {t1 - t0:.2f}s")
     except asyncio.TimeoutError:
-        logger.warning("Translation timed out")
+        logger.warning(f"Translation timed out after {time.perf_counter() - t0:.2f}s")
         yield {"event": "error", "data": "응답이 지연되고 있어요. 잠시 후 다시 시도해 주세요."}
         return
     except Exception:
@@ -55,13 +59,16 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         return
     
     # 2. Generate vector representation
+    t2 = time.perf_counter()
     try:
         query_vector = await asyncio.wait_for(
             embedding_service.agenerate_embedding(english_query),
-            timeout=10.0,
+            timeout=30.0,
         )
+        t3 = time.perf_counter()
+        logger.info(f"Embedding successful in {t3 - t2:.2f}s")
     except asyncio.TimeoutError:
-        logger.warning("Embedding generation timed out")
+        logger.warning(f"Embedding generation timed out after {time.perf_counter() - t2:.2f}s")
         yield {"event": "error", "data": "응답이 지연되고 있어요. 잠시 후 다시 시도해 주세요."}
         return
     except Exception:
@@ -71,15 +78,19 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     
     # 3. Perform hybrid search in Supabase
     # We use the RPC match_documents function defined in schema.sql
+    t4 = time.perf_counter()
     try:
         response = await asyncio.to_thread(_search_documents, query_vector)
         documents = response.data
+        t5 = time.perf_counter()
+        logger.info(f"Database search successful in {t5 - t4:.2f}s. Found {len(documents)} docs.")
     except Exception:
         logger.exception("Database search failed")
         yield {"event": "error", "data": "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."}
         return
         
     if not documents:
+        logger.warning(f"No documents found for query in {time.perf_counter() - t4:.2f}s")
         yield {"event": "content", "data": "관련 철학적 내용을 찾을 수 없습니다."}
         return
 
@@ -126,13 +137,18 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
 
     formatted_history = "\n\n".join(formatted_parts)
             
+    t6 = time.perf_counter()
     try:
         chunk_count = 0
         disconnected = False
         async for chunk in get_response_stream_async(context=combined_context, query=english_query, history=formatted_history):
+            if chunk_count == 0:
+                logger.info(f"First LLM chunk received in {time.perf_counter() - t6:.2f}s")
+                
             # If client disconnects, stop generating
             if await request.is_disconnected():
                 disconnected = True
+                logger.info(f"Client disconnected during streaming after {chunk_count} chunks.")
                 break
                 
             chunk_count += 1
@@ -140,9 +156,12 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
             chunk_clean = chunk.replace("\n", "\\n")
             yield {"event": "content", "data": chunk_clean}
             
-        if not disconnected and chunk_count == 0:
-            logger.warning("LLM returned 0 chunks. Sending a fallback message.")
-            yield {"event": "content", "data": "철학자는 난색을 표하며 서적을 뒤적거립니다. 대신 철학자가 답변을 해줄 만한 다른 질문은 없을까요?"}
+        if not disconnected:
+            if chunk_count == 0:
+                logger.warning(f"LLM returned 0 chunks after {time.perf_counter() - t6:.2f}s. Sending a fallback message.")
+                yield {"event": "content", "data": "철학자는 난색을 표하며 서적을 뒤적거립니다. 대신 철학자가 답변을 해줄 만한 다른 질문은 없을까요?"}
+            else:
+                logger.info(f"Stream finished successfully. Total chunks: {chunk_count}, Total time: {time.perf_counter() - t0:.2f}s")
 
     except Exception:
         logger.exception("Failed while streaming LLM response")
@@ -170,7 +189,7 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
         return {"title": DEFAULT_CHAT_TITLE}
 
     try:
-        title = await asyncio.wait_for(generate_chat_title_async(query), timeout=10.0)
+        title = await asyncio.wait_for(generate_chat_title_async(query), timeout=30.0)
         # Handle case where LLM returns something too long or with quotes
         title = title.replace('"', '').replace("'", "").strip()
         if not title:
@@ -181,7 +200,7 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
             title = title[: MAX_TITLE_LEN - len(ELLIPSIS)] + ELLIPSIS
         return {"title": title}
     except asyncio.TimeoutError:
-        logger.warning("Timeout generating chat title")
+        logger.warning("Timeout generating chat title after 30s")
         return {"title": DEFAULT_CHAT_TITLE}
     except Exception:
         logger.exception("Failed to generate chat title")
