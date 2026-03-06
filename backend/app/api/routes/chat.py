@@ -14,6 +14,10 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 DEFAULT_CHAT_TITLE = "새로운 대화"
+CHAT_TIMEOUT = 30.0
+
+# Concurrency limit for database RPC calls to prevent thread pool exhaustion
+_db_rpc_semaphore = asyncio.Semaphore(16)
 
 class HistoryMessage(BaseModel):
     role: str
@@ -45,7 +49,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     try:
         english_query = await asyncio.wait_for(
             get_english_translation(query),
-            timeout=30.0,
+            timeout=CHAT_TIMEOUT,
         )
         t1 = time.perf_counter()
         logger.info(f"Translation successful in {t1 - t0:.2f}s")
@@ -63,7 +67,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     try:
         query_vector = await asyncio.wait_for(
             embedding_service.agenerate_embedding(english_query),
-            timeout=30.0,
+            timeout=CHAT_TIMEOUT,
         )
         t3 = time.perf_counter()
         logger.info(f"Embedding successful in {t3 - t2:.2f}s")
@@ -80,10 +84,11 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     # We use the RPC match_documents function defined in schema.sql
     t4 = time.perf_counter()
     try:
-        response = await asyncio.wait_for(
-            asyncio.to_thread(_search_documents, query_vector),
-            timeout=30.0,
-        )
+        async with _db_rpc_semaphore:
+            response = await asyncio.wait_for(
+                asyncio.to_thread(_search_documents, query_vector),
+                timeout=CHAT_TIMEOUT,
+            )
         documents = response.data or []
         t5 = time.perf_counter()
         logger.info(f"Database search successful in {t5 - t4:.2f}s. Found {len(documents)} docs.")
@@ -196,7 +201,7 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
         return {"title": DEFAULT_CHAT_TITLE}
 
     try:
-        title = await asyncio.wait_for(generate_chat_title_async(query), timeout=30.0)
+        title = await asyncio.wait_for(generate_chat_title_async(query), timeout=CHAT_TIMEOUT)
         # Handle case where LLM returns something too long or with quotes
         title = title.replace('"', '').replace("'", "").strip()
         if not title:
@@ -207,7 +212,7 @@ async def chat_title_endpoint(request: Request, title_request: TitleRequest):
             title = title[: MAX_TITLE_LEN - len(ELLIPSIS)] + ELLIPSIS
         return {"title": title}
     except asyncio.TimeoutError:
-        logger.warning("Timeout generating chat title after 30s")
+        logger.warning(f"Timeout generating chat title after {CHAT_TIMEOUT}s")
         return {"title": DEFAULT_CHAT_TITLE}
     except Exception:
         logger.exception("Failed to generate chat title")

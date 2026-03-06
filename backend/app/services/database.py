@@ -1,5 +1,5 @@
 import threading
-from supabase import create_client, Client
+from supabase import create_client, Client, ClientOptions
 from app.core.config import settings
 
 SUPABASE_CONFIG_ERROR = "SUPABASE_URL and SUPABASE_SERVICE_KEY must be configured"
@@ -14,7 +14,9 @@ def _get_supabase_client() -> Client:
     supabase_key = settings.SUPABASE_SERVICE_KEY
     if not supabase_url or not supabase_key:
         raise RuntimeError(SUPABASE_CONFIG_ERROR)
-    return create_client(supabase_url, supabase_key)
+    
+    options = ClientOptions(postgrest_client_timeout=30)
+    return create_client(supabase_url, supabase_key, options=options)
 
 
 _client_lock = threading.Lock()
