@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     # API Keys
     GEMINI_API_KEY: str = ""
     ALADIN_API_KEY: str = ""
+    HUGGINGFACEHUB_API_TOKEN: str = ""
     
     # Supabase Settings
     SUPABASE_URL: str = ""

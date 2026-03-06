@@ -128,9 +128,11 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
             
     try:
         chunk_count = 0
+        disconnected = False
         async for chunk in get_response_stream_async(context=combined_context, query=english_query, history=formatted_history):
             # If client disconnects, stop generating
             if await request.is_disconnected():
+                disconnected = True
                 break
                 
             chunk_count += 1
@@ -138,7 +140,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
             chunk_clean = chunk.replace("\n", "\\n")
             yield {"event": "content", "data": chunk_clean}
             
-        if chunk_count == 0:
+        if not disconnected and chunk_count == 0:
             logger.warning("LLM returned 0 chunks. Sending a fallback message.")
             yield {"event": "content", "data": "철학자는 난색을 표하며 서적을 뒤적거립니다. 대신 철학자가 답변을 해줄 만한 다른 질문은 없을까요?"}
 
