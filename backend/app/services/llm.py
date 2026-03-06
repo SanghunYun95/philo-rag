@@ -124,15 +124,20 @@ async def get_response_stream_async(context: str, query: str, history: str = "")
     prompt = get_rag_prompt()
     chain = prompt | get_llm() | StrOutputParser()
     generator = chain.astream({"context": context, "chat_history": history, "query": query})
-    while True:
-        try:
-            chunk = await asyncio.wait_for(generator.__anext__(), timeout=30.0)
-            yield chunk
-        except StopAsyncIteration:
-            break
-        except asyncio.TimeoutError:
-            print("LLM stream chunk timed out after 30 seconds.")
-            raise
+    try:
+        while True:
+            try:
+                chunk = await asyncio.wait_for(generator.__anext__(), timeout=30.0)
+                yield chunk
+            except StopAsyncIteration:
+                break
+    except asyncio.TimeoutError:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"LLM stream chunk timed out after 30 seconds. Query: {query}")
+        raise
+    finally:
+        await generator.aclose()
 
 title_prompt = PromptTemplate.from_template(
     """주어진 질문을 기반으로 철학적인 대화방 제목을 15자 이내로 지어줘.

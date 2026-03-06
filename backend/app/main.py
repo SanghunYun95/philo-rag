@@ -49,7 +49,7 @@ async def lifespan(_app: FastAPI):
                 await asyncio.wait_for(asyncio.shield(preload_task), timeout=3.0)
             except asyncio.TimeoutError:
                 logger.warning("Preload task did not finish before shutdown.")
-            except Exception as e:
+            except Exception:
                 logger.exception("Exception occurred while waiting for preload task during shutdown.")
 
 app = FastAPI(
