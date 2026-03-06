@@ -80,10 +80,17 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     # We use the RPC match_documents function defined in schema.sql
     t4 = time.perf_counter()
     try:
-        response = await asyncio.to_thread(_search_documents, query_vector)
-        documents = response.data
+        response = await asyncio.wait_for(
+            asyncio.to_thread(_search_documents, query_vector),
+            timeout=30.0,
+        )
+        documents = response.data or []
         t5 = time.perf_counter()
         logger.info(f"Database search successful in {t5 - t4:.2f}s. Found {len(documents)} docs.")
+    except asyncio.TimeoutError:
+        logger.error(f"Database search timed out after {time.perf_counter() - t4:.2f}s")
+        yield {"event": "error", "data": "검색이 지연되고 있어요. 잠시 후 다시 시도해 주세요."}
+        return
     except Exception:
         logger.exception("Database search failed")
         yield {"event": "error", "data": "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."}
