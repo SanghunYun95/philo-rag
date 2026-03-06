@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import google.generativeai as genai
+from openai import OpenAI
 
 env_path = Path(__file__).resolve().parents[2] / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -9,17 +9,17 @@ load_dotenv(dotenv_path=env_path)
 import sys
 
 def main() -> int:
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         print("No API key found!")
         return 1
 
-    genai.configure(api_key=api_key)
+    client = OpenAI(api_key=api_key)
     print("Available Models:")
     try:
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                print(m.name)
+        models = client.models.list()
+        for m in models:
+            print(m.id)
     except Exception as e:
         print(f"Error listing models: {e}")
         return 1

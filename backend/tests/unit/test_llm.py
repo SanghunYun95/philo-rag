@@ -12,14 +12,14 @@ import os
 
 @pytest.fixture(autouse=True)
 def setup_test_env(monkeypatch):
-    monkeypatch.setenv("GEMINI_API_KEY", "dummy_test_key")
+    monkeypatch.setenv("OPENAI_API_KEY", "dummy_test_key")
     monkeypatch.setenv("SUPABASE_URL", "http://localhost:8000")
     monkeypatch.setenv("SUPABASE_SERVICE_KEY", "dummy_test_key")
     
     # Ensure settings reflect the mocked env vars globally in case they were initialized
     try:
         from app.core.config import settings
-        monkeypatch.setattr(settings, "GEMINI_API_KEY", "dummy_test_key")
+        monkeypatch.setattr(settings, "OPENAI_API_KEY", "dummy_test_key")
         monkeypatch.setattr(settings, "SUPABASE_URL", "http://localhost:8000")
         monkeypatch.setattr(settings, "SUPABASE_SERVICE_KEY", "dummy_test_key")
     except ImportError:

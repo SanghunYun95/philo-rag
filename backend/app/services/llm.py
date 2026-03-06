@@ -3,25 +3,24 @@ import re
 import threading
 from pathlib import Path
 import asyncio
-import google.generativeai as genai
 from app.core.config import settings
-from app.core.env_utils import parse_gemini_api_keys
+from app.core.env_utils import parse_openai_api_keys
 from langchain_core.prompts import PromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
 # Models will be instantiated lazily or during function call
 _llm = None
 _llm_lock = threading.Lock()
 
-def get_all_gemini_keys() -> list[str]:
-    """Reads active GEMINI_API_KEY assignments from the root .env file."""
+def get_all_openai_keys() -> list[str]:
+    """Reads active OPENAI_API_KEY assignments from the root .env file."""
     env_path = Path(__file__).resolve().parents[3] / ".env"
-    keys = parse_gemini_api_keys(env_path)
+    keys = parse_openai_api_keys(env_path)
                     
     # Ensure the one from environment variables/settings is also included
-    if getattr(settings, "GEMINI_API_KEY", None) and settings.GEMINI_API_KEY not in keys:
-        keys.insert(0, settings.GEMINI_API_KEY)
+    if getattr(settings, "OPENAI_API_KEY", None) and settings.OPENAI_API_KEY not in keys:
+        keys.insert(0, settings.OPENAI_API_KEY)
         
     return keys
 
@@ -30,20 +29,17 @@ def get_llm():
     if _llm is None:
         with _llm_lock:
             if _llm is None:  # Double-checked locking
-                keys = get_all_gemini_keys()
+                keys = get_all_openai_keys()
                 
                 if not keys:
-                    raise RuntimeError("No GEMINI_API_KEY found in .env or environment")
+                    raise RuntimeError("No OPENAI_API_KEY found in .env or environment")
                 
-                # Configure Gemini API natively with the first key
-                genai.configure(api_key=keys[0])
-                
-                print(f"Loaded {len(keys)} Gemini API keys for rotation/fallbacks.")
+                print(f"Loaded {len(keys)} OpenAI API keys for rotation/fallbacks.")
                 
                 # Create the primary model
-                primary_llm = ChatGoogleGenerativeAI(
-                    model="gemini-2.5-flash-lite", 
-                    google_api_key=keys[0],
+                primary_llm = ChatOpenAI(
+                    model="gpt-4o-mini", 
+                    api_key=keys[0],
                     temperature=0.7,
                     max_retries=1
                 )
@@ -51,9 +47,9 @@ def get_llm():
                 if len(keys) > 1:
                     # Create fallback models with the other keys
                     fallback_llms = [
-                        ChatGoogleGenerativeAI(
-                            model="gemini-2.5-flash-lite", 
-                            google_api_key=k,
+                        ChatOpenAI(
+                            model="gpt-4o-mini", 
+                            api_key=k,
                             temperature=0.7,
                             max_retries=1
                         )
@@ -77,7 +73,7 @@ translation_prompt = PromptTemplate.from_template(
 
 async def get_english_translation(korean_query: str) -> str:
     """
-    Translates a Korean query to English using Gemini via LangChain.
+    Translates a Korean query to English using OpenAI via LangChain.
     """
     chain = translation_prompt | get_llm() | StrOutputParser()
     return await chain.ainvoke({"query": korean_query})
@@ -157,7 +153,7 @@ title_prompt = PromptTemplate.from_template(
 
 async def generate_chat_title_async(query: str) -> str:
     """
-    Generates a short chat title based on the user's first query using Gemini.
+    Generates a short chat title based on the user's first query using OpenAI.
     """
     chain = title_prompt | get_llm() | StrOutputParser()
     title = await chain.ainvoke({"query": query})

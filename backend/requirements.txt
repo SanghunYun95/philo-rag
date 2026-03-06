@@ -3,8 +3,7 @@ uvicorn
 supabase
 langchain-core>=1.2.5,<2.0.0
 langchain-classic>=1.0.0,<2.0.0
-langchain-google-genai>=4.2.1,<5.0.0
-google-generativeai
+langchain-openai>=0.1.0,<1.0.0
 sse-starlette
 pydantic>=2.7.0
 pydantic-settings
