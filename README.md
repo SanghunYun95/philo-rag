@@ -3,7 +3,9 @@
 > 본 프로젝트의 백엔드 서버는 무료 클라우드 인스턴스에 배포되어 운영 중입니다. 일정 시간 요청이 없으면 서버가 휴면 상태로 전환되므로, **최초 접속 시 (Cold start) 백엔드 응답까지 약 1분 정도의 대기 시간이 발생**할 수 있습니다. 
 
 **실제 배포된 사이트 URL:** https://philo-rag.vercel.app/
-[raw-recording.webm](https://github.com/user-attachments/assets/baf61235-ed3e-40d3-8a77-0f9a1254e4de)
+
+<video src="https://github.com/user-attachments/assets/baf61235-ed3e-40d3-8a77-0f9a1254e4de" autoplay loop muted playsinline width="100%">
+</video>
 
 **Philo-RAG**는 위대한 철학자들의 저술과 사상을 바탕으로, 사용자의 질문에 답변을 제공하는 대화형 RAG(Retrieval-Augmented Generation) 웹 애플리케이션입니다.
 
