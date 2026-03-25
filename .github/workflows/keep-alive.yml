@@ -21,16 +21,26 @@ jobs:
           set -uo pipefail
           URLS=(
             "https://philo-rag-backend.onrender.com/health"
-            "https://jjadfpnpfuxjbmkxyhqt.supabase.co"
+            "https://jjadfpnpfuxjbmkxyhqt.supabase.co/rest/v1/"
           )
           EXIT_STATUS=0
           for url in "${URLS[@]}"; do
             echo "Pinging $url..."
-            if ! curl -fsS -I --connect-timeout 30 --max-time 120 --retry 3 "$url"; then
-              echo "::error::Failed to ping $url"
+            # Render (/health) is GET-only. Supabase root (/ ) returns 404.
+            # Using -L to follow redirects and removing -I to use GET.
+            # We allow 4xx (like 401 Unauthorized for Supabase) as it still indicates the service is up.
+            HTTP_CODE=$(curl -s -L -o /dev/null -w "%{http_code}" --connect-timeout 30 --max-time 120 --retry 3 "$url")
+            HTTP_CODE=${HTTP_CODE:-000}
+            echo "HTTP Status for $url: $HTTP_CODE"
+            
+            if [[ "$HTTP_CODE" == "000" ]]; then
+              echo "::error::Failed to connect to $url (Connection failed)"
               EXIT_STATUS=1
-            else
+            elif [[ "$HTTP_CODE" -ge 200 && "$HTTP_CODE" -lt 500 ]]; then
               echo "Keep-alive ping sent to $url at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            else
+              echo "::error::Failed to ping $url (Status: $HTTP_CODE)"
+              EXIT_STATUS=1
             fi
           done
           exit $EXIT_STATUS
