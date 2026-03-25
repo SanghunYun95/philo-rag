@@ -15,12 +15,10 @@ jobs:
     steps:
       - name: Send Keep-alive Request
         run: |
-          # 렌더링 URL은 사용자가 실제 URL로 교체해야 합니다.
           RENDER_URL="https://philo-rag-backend.onrender.com"
           curl -I "$RENDER_URL/health"
           echo "Keep-alive ping sent to Render ($RENDER_URL) at $(date)"
 
-          # Supabase도 깨어나게 하기 위해 헬스체크를 보냅니다.
           SUPABASE_URL="https://jjadfpnpfuxjbmkxyhqt.supabase.co"
           curl -I "$SUPABASE_URL"
           echo "Keep-alive ping sent to Supabase ($SUPABASE_URL) at $(date)"
