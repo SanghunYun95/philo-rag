@@ -18,12 +18,19 @@ jobs:
     steps:
       - name: Send Keep-alive Request
         run: |
-          set -euo pipefail
+          set -uo pipefail
           URLS=(
             "https://philo-rag-backend.onrender.com/health"
             "https://jjadfpnpfuxjbmkxyhqt.supabase.co"
           )
+          EXIT_STATUS=0
           for url in "${URLS[@]}"; do
-            curl -fsS -I --connect-timeout 5 --max-time 15 --retry 2 "$url"
-            echo "Keep-alive ping sent to $url at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "Pinging $url..."
+            if ! curl -fsS -I --connect-timeout 30 --max-time 120 --retry 3 "$url"; then
+              echo "::error::Failed to ping $url"
+              EXIT_STATUS=1
+            else
+              echo "Keep-alive ping sent to $url at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            fi
           done
+          exit $EXIT_STATUS
