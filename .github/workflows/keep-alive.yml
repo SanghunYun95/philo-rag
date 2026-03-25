@@ -1,0 +1,26 @@
+name: Keep Philo-RAG Alive
+
+on:
+  schedule:
+    # 10분마다 실행 (분 시 일 월 요일)
+    # 한국 시간 08:30 ~ 18:30은 UTC 기준 23:30 ~ 09:30입니다.
+    # cron 구문: 분 시 일 월 요일
+    - cron: '*/10 23,0-8 * * *'
+    - cron: '0-30/10 9 * * *'
+  workflow_dispatch: # 수동 실행 가능하도록 추가
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Keep-alive Request
+        run: |
+          # 렌더링 URL은 사용자가 실제 URL로 교체해야 합니다.
+          RENDER_URL="https://philo-rag-backend.onrender.com"
+          curl -I "$RENDER_URL/health"
+          echo "Keep-alive ping sent to Render ($RENDER_URL) at $(date)"
+
+          # Supabase도 깨어나게 하기 위해 헬스체크를 보냅니다.
+          SUPABASE_URL="https://jjadfpnpfuxjbmkxyhqt.supabase.co"
+          curl -I "$SUPABASE_URL"
+          echo "Keep-alive ping sent to Supabase ($SUPABASE_URL) at $(date)"
