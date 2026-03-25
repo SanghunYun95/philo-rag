@@ -4,6 +4,9 @@
 
 **실제 배포된 사이트 URL:** https://philo-rag.vercel.app/
 
+<video src="https://github.com/user-attachments/assets/baf61235-ed3e-40d3-8a77-0f9a1254e4de" autoplay loop muted playsinline width="100%">
+</video>
+
 **Philo-RAG**는 위대한 철학자들의 저술과 사상을 바탕으로, 사용자의 질문에 답변을 제공하는 대화형 RAG(Retrieval-Augmented Generation) 웹 애플리케이션입니다.
 
 ---
