@@ -4,8 +4,11 @@ on:
   schedule:
     # 10분마다 실행 (분 시 일 월 요일)
     # 한국 시간 08:30 ~ 18:30은 UTC 기준 23:30 ~ 09:30입니다.
-    # cron 구문: 분 시 일 월 요일
-    - cron: '*/10 23,0-8 * * *'
+    # 08:30-08:50 KST (23:30-23:50 UTC)
+    - cron: '30-59/10 23 * * *'
+    # 09:00-17:50 KST (00:00-08:50 UTC)
+    - cron: '*/10 0-8 * * *'
+    # 18:00-18:30 KST (09:00-09:30 UTC)
     - cron: '0-30/10 9 * * *'
   workflow_dispatch: # 수동 실행 가능하도록 추가
 
@@ -15,10 +18,12 @@ jobs:
     steps:
       - name: Send Keep-alive Request
         run: |
-          RENDER_URL="https://philo-rag-backend.onrender.com"
-          curl -I "$RENDER_URL/health"
-          echo "Keep-alive ping sent to Render ($RENDER_URL) at $(date)"
-
-          SUPABASE_URL="https://jjadfpnpfuxjbmkxyhqt.supabase.co"
-          curl -I "$SUPABASE_URL"
-          echo "Keep-alive ping sent to Supabase ($SUPABASE_URL) at $(date)"
+          set -euo pipefail
+          URLS=(
+            "https://philo-rag-backend.onrender.com/health"
+            "https://jjadfpnpfuxjbmkxyhqt.supabase.co"
+          )
+          for url in "${URLS[@]}"; do
+            curl -fsS -I --connect-timeout 5 --max-time 15 --retry 2 "$url"
+            echo "Keep-alive ping sent to $url at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          done
