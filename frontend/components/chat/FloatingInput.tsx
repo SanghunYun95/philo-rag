@@ -48,8 +48,6 @@ export function FloatingInput({ onSendMessage, isSubmitting }: FloatingInputProp
                             lastCompositionEndAt.current = Date.now();
                         }}
                         onKeyDown={(e) => {
-                            if (e.nativeEvent.isComposing || isComposing.current || Date.now() - lastCompositionEndAt.current < 50) return;
-
                             if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSend();
