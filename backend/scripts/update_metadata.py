@@ -114,6 +114,8 @@ def update_metadata():
             
         except Exception as e:
             logger.error(f"[{i+1}/{total}] Error updating {title}: {e!r}")
+            # Re-raise to ensure non-zero exit and error visibility
+            raise
 
 if __name__ == "__main__":
     update_metadata()
