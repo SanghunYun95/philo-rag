@@ -18,20 +18,20 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create a non-privileged user first so we can use it for directory ownership
-RUN adduser --disabled-password --gecos "" appuser
-
-# Setup model cache directory with proper ownership for pre-loading (restrictive permissions)
-RUN mkdir -p /app/model_cache && \
+RUN adduser --disabled-password --gecos "" appuser && \
+    mkdir -p /app/model_cache && \
     chown -R appuser:appuser /app && \
     chmod 755 /app/model_cache
 
 ENV HF_HOME=/app/model_cache
 
-# Pre-load the embedding model to reduce cold start latency
-RUN python -c "from langchain_huggingface import HuggingFaceEmbeddings; HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cpu'})"
-
-# Switch to non-privileged user
+# Switch to non-privileged user BEFORE pre-loading models
+# This ensures a consistent environment (permissions) between build-time pre-loading and runtime
 USER appuser
+
+# Pre-load the embedding model to reduce cold start latency
+# This runs as 'appuser', matching the runtime environment
+RUN python -c "from langchain_huggingface import HuggingFaceEmbeddings; HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cpu'})"
 
 # Expose the port
 EXPOSE 8080
