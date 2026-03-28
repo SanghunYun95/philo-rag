@@ -5,15 +5,29 @@ on:
     branches:
       - main
 
+# Prevent overlapping deployments but allow queuing
+concurrency:
+  group: "deploy-main"
+  cancel-in-progress: false
+
 env:
-  PROJECT_ID: 'vigilant-shift-490601-t5' # Using provided project ID
-  REGION: 'asia-northeast3' # Seoul region for better latency in KR
+  PROJECT_ID: 'vigilant-shift-490601-t5'
+  REGION: 'asia-northeast3'
   SERVICE_NAME: 'philo-rag-backend'
+  GAR_HOST: 'asia-northeast3-docker.pkg.dev'
+  IMAGE_NAME: 'philo-rag-backend'
+  # Constructs the full image URI for centralization
+  IMAGE_URI: 'asia-northeast3-docker.pkg.dev/vigilant-shift-490601-t5/cloud-run-source-deploy/philo-rag-backend:latest'
 
 jobs:
   deploy-backend:
     name: Build & Deploy Backend to Cloud Run
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    outputs:
+      backend_url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,26 +35,29 @@ jobs:
       - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          # Use Workload Identity Federation for better security
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Authorize Docker
-        run: gcloud auth configure-docker asia-northeast3-docker.pkg.dev
+        run: gcloud auth configure-docker ${{ env.GAR_HOST }}
 
       - name: Build and Push Container
         working-directory: ./backend
         run: |-
-          docker build -t "asia-northeast3-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ env.SERVICE_NAME }}:${{ github.sha }}" .
-          docker push "asia-northeast3-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          docker build -t "${{ env.IMAGE_URI }}" .
+          docker push "${{ env.IMAGE_URI }}"
 
       - name: Deploy to Cloud Run
+        id: deploy
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          image: asia-northeast3-docker.pkg.dev/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          image: ${{ env.IMAGE_URI }}
           env_vars: |-
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}
@@ -68,7 +85,8 @@ jobs:
       - name: Build Frontend
         working-directory: ./frontend
         env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+          # Injects the actual deployed backend URL into the frontend build
+          NEXT_PUBLIC_API_BASE_URL: ${{ needs.deploy-backend.outputs.backend_url }}
         run: npm run build
 
       - name: Deploy to Firebase Hosting

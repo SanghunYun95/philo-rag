@@ -17,12 +17,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Setup model cache directory for pre-loading
+RUN mkdir -p /app/model_cache && chmod 777 /app/model_cache
+ENV HF_HOME=/app/model_cache
+
+# Pre-load the embedding model to reduce cold start latency
+RUN python -c "from langchain_huggingface import HuggingFaceEmbeddings; HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cpu'})"
+
+# Create a non-privileged user for security
+RUN adduser --disabled-password --gecos "" appuser \
+    && chown -R appuser:appuser /app
+
+# Switch to non-privileged user
+USER appuser
 
 # Expose the port
 EXPOSE 8080
 
-# Command to run the application
-# We use 0.0.0.0 for Cloud Run
+# Command to run the application (0.0.0.0 for Cloud Run)
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers"]

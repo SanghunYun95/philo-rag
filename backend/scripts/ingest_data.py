@@ -8,14 +8,14 @@ import concurrent.futures
 from typing import List, Dict
 
 # Ensure we can import app modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 from app.services.embedding import embedding_service
 from app.services.database import get_client
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-supabase_client = get_client()
+# Supabase client will be initialized in ingest_document to avoid issues during import
 
 class IngestionError(Exception):
     """Raised when data ingestion fails."""
@@ -49,23 +49,32 @@ def generate_deterministic_uuid(seed_text: str) -> str:
     """Generates a consistent UUID based on the input text to ensure idempotency."""
     return str(uuid.uuid5(UUID_NAMESPACE, seed_text))
 
+import re
+
 def strip_gutenberg_boilerplate(text: str) -> str:
     """Removes Project Gutenberg START and END identifiers from the text."""
-    start_marker = "*** START OF THE PROJECT GUTENBERG EBOOK"
-    end_marker = "*** END OF THE PROJECT GUTENBERG EBOOK"
+    # Robust START and END markers derived from standard Gutenberg patterns
+    start_marker_regex = r"\*\*\* START OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*"
+    end_marker_regex = r"\*\*\* END OF (THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*"
     
-    start_idx = text.upper().find(start_marker)
-    if start_idx != -1:
-        # Move past the marker line
-        newline_idx = text.find("\n", start_idx)
-        if newline_idx != -1:
-            text = text[newline_idx+1:]
+    # Find START marker
+    start_match = re.search(start_marker_regex, text, re.IGNORECASE | re.DOTALL)
+    if start_match:
+        text = text[start_match.end():]
             
-    end_idx = text.upper().find(end_marker)
-    if end_idx != -1:
-        text = text[:end_idx]
+    # Find END marker 
+    # Use standard marker or common fallback license starters
+    end_match = re.search(end_marker_regex, text, re.IGNORECASE | re.DOTALL)
+    if end_match:
+        text = text[:end_match.start()]
+    else:
+        # Fallback to searching for the full license block if marker is missing
+        license_starter = r"THE FULL PROJECT GUTENBERG™ LICENSE"
+        license_match = re.search(license_starter, text, re.IGNORECASE)
+        if license_match:
+            text = text[:license_match.start()]
         
-    return text
+    return text.strip()
 
 def generate_embedding_with_retry(text: str, max_retries: int = 3):
     """Wrapper to handle rate limiting and retries for the embedding API."""
@@ -87,6 +96,7 @@ def ingest_document(text: str, philosopher: str, school: str, book_title: str, l
     Chunks text, fetches metadata, generates embeddings via multiprocessing,
     and upserts to Supabase in batches with idempotency.
     """
+    supabase_client = get_client() # Lazy initialization
     print(f"Starting ingestion for {philosopher} - {book_title}")
     
     # 1. Fetch metadata

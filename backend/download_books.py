@@ -181,7 +181,13 @@ def main():
     os.makedirs(data_dir, exist_ok=True)
     
     downloaded_count = 0
-    target_count = int(os.getenv("TARGET_COUNT", "300"))
+    raw_target_count = os.getenv("TARGET_COUNT", "300")
+    try:
+        target_count = int(raw_target_count)
+    except ValueError as exc:
+        raise ValueError(f"TARGET_COUNT must be an integer, got '{raw_target_count}'") from exc
+    if target_count <= 0:
+        raise ValueError(f"TARGET_COUNT must be greater than 0, got {target_count}")
     
     current_url = shelf_url
     
