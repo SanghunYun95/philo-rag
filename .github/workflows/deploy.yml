@@ -23,9 +23,6 @@ jobs:
   deploy-backend:
     name: Build & Deploy Backend to Cloud Run
     runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
     outputs:
       backend_url: ${{ steps.deploy.outputs.url }}
     steps:
@@ -35,9 +32,8 @@ jobs:
       - name: Google Auth
         uses: google-github-actions/auth@v2
         with:
-          # Use Workload Identity Federation for better security
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          # Falling back to GCP_SA_KEY due to Workload Identity Federation configuration issues
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
