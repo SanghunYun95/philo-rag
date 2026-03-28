@@ -3,7 +3,7 @@ import sys
 import logging
 
 # Ensure we can import app modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.services.database import get_client
 
@@ -90,30 +90,30 @@ def update_metadata():
     
     for i, (title, meta) in enumerate(METADATA_MAPPING.items()):
         try:
-            # First, fetch existing metadata to combine
-            res = supabase.table("documents").select("metadata").eq("metadata->book_info->>title", title).limit(1).execute()
+            # Fetch all documents with this book title to update them individually
+            # This preserves per-chunk metadata like chunk_index
+            res = supabase.table("documents").select("id, metadata").eq("metadata->book_info->>title", title).execute()
             
             if not res.data:
                 logger.warning(f"[{i+1}/{total}] Book not found in DB: {title}")
                 continue
                 
-            # Update all documents with this book title
-            # In Supabase/Postgrest, updating with filter works for all matching rows
-            update_data = {
-                "metadata": {
-                    **res.data[0]["metadata"],
-                    "kr_title": meta["kr_title"],
-                    "thumbnail": meta["thumbnail"],
-                    "link": meta["link"]
+            # Update each document individually to preserve unique chunk_index
+            for doc in res.data:
+                update_data = {
+                    "metadata": {
+                        **doc["metadata"],
+                        "kr_title": meta["kr_title"],
+                        "thumbnail": meta["thumbnail"],
+                        "link": meta["link"]
+                    }
                 }
-            }
+                supabase.table("documents").update(update_data).eq("id", doc["id"]).execute()
             
-            # Using raw Postgrest update for multiple rows
-            supabase.table("documents").update(update_data).eq("metadata->book_info->>title", title).execute()
-            logger.info(f"[{i+1}/{total}] Successfully updated: {meta['kr_title']}")
+            logger.info(f"[{i+1}/{total}] Successfully updated {len(res.data)} chunks: {meta['kr_title']}")
             
         except Exception as e:
-            logger.error(f"[{i+1}/{total}] Error updating {title}: {str(e)}")
+            logger.error(f"[{i+1}/{total}] Error updating {title}: {e!r}")
 
 if __name__ == "__main__":
     update_metadata()

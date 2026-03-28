@@ -1,6 +1,6 @@
-# Contract Ledger BMAD-METHOD 통합 가이드라인
+# Philo-RAG BMAD-METHOD 통합 가이드라인
 
-이 문서는 AI 협업 효율을 극대화하기 위해 BMAD-METHOD(Behavior-driven, Model-based Analysis and Design)를 `Contract Ledger` 프로젝트에 적용하는 전체 규칙과 활용법을 담고 있습니다.
+이 문서는 AI 협업 효율을 극대화하기 위해 BMAD-METHOD(Behavior-driven, Model-based Analysis and Design)를 `Philo-RAG` 프로젝트에 적용하는 전체 규칙과 활용법을 담고 있습니다.
 
 ---
 

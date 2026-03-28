@@ -181,7 +181,7 @@ def main():
     os.makedirs(data_dir, exist_ok=True)
     
     downloaded_count = 0
-    target_count = 300
+    target_count = int(os.getenv("TARGET_COUNT", "300"))
     
     current_url = shelf_url
     

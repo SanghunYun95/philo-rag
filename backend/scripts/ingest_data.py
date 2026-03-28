@@ -15,10 +15,7 @@ from app.services.embedding import embedding_service
 from app.services.database import get_client
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-def get_supabase_client():
-    return get_client()
-
-supabase_client = get_supabase_client()
+supabase_client = get_client()
 
 class IngestionError(Exception):
     """Raised when data ingestion fails."""
