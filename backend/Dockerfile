@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create a non-privileged user first so we can use it for directory ownership
 RUN adduser --disabled-password --gecos "" appuser
 
-# Setup model cache directory with proper ownership for pre-loading
+# Setup model cache directory with proper ownership for pre-loading (restrictive permissions)
 RUN mkdir -p /app/model_cache && \
     chown -R appuser:appuser /app && \
     chmod 755 /app/model_cache
