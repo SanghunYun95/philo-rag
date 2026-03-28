@@ -1,7 +1,13 @@
+import os
 import sys
-from app.services.database import supabase_client
+
+# Ensure we can import app modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app.services.database import get_client
 
 try:
+    supabase_client = get_client()
     # Try to select from documents to check if the table exists
     res = supabase_client.table('documents').select('id').limit(1).execute()
     print('Table exists')

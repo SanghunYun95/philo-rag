@@ -4,10 +4,14 @@
 
 **실제 배포된 사이트 URL:** https://philo-rag.vercel.app/
 
-<video src="https://github.com/user-attachments/assets/baf61235-ed3e-40d3-8a77-0f9a1254e4de" autoplay loop muted playsinline width="100%">
-</video>
+---
 
-**Philo-RAG**는 위대한 철학자들의 저술과 사상을 바탕으로, 사용자의 질문에 답변을 제공하는 대화형 RAG(Retrieval-Augmented Generation) 웹 애플리케이션입니다.
+## 🚀 향후 고도화 계획 (Future Roadmap)
+
+- [x] **도서 데이터 아카이브 구축 (101권)**: 구텐베르크 프로젝트 기반 핵심 철학 고전 데이터베이스 구축 및 Supabase 벡터DB 적재 완료
+- [x] **데이터 스트리밍 최적화**: 101권의 방대한 컨텍스트(약 8만 청크) 내에서 불필요한 노이즈(Boilerplate)를 제거하고 철학적 맥락만 정밀 추출하여, **기존 대비 약 31.8%(610MB → 416MB)의 데이터 경량화 및 검색 효율성 달성**
+- [ ] **RAGAS 평가 framework**: 답변의 정확성(Faithfulness)과 관련성(Relevance) 정량적 측정 및 최적화
+- [ ] **보안 강화**: 프롬프트 인젝션 방지 전용 레이어 및 입력 Sanitization 로직 구현
 
 ---
 
@@ -216,3 +220,6 @@ echo "NEXT_PUBLIC_API_BASE_URL=http://localhost:8000" > .env.local
 npm run dev
 ```
 Open `http://localhost:3000` to start using the system.
+
+Open `http://localhost:3000` to start using the system.
+

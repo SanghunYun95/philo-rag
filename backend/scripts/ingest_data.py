@@ -12,8 +12,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
 from app.services.embedding import embedding_service
-from app.services.database import supabase_client
+from app.services.database import get_client
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+def get_supabase_client():
+    return get_client()
+
+supabase_client = get_supabase_client()
 
 class IngestionError(Exception):
     """Raised when data ingestion fails."""

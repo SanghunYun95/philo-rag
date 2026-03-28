@@ -4,10 +4,11 @@ import sys
 # Ensure we can import app modules
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app.services.database import supabase_client
+from app.services.database import get_client
 import uuid
 
 def verify_and_clear():
+    supabase_client = get_client()
     print("Clearing 'documents' table...")
     # Delete all rows
     try:
