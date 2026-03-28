@@ -1,6 +1,6 @@
 import threading
 import logging
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -19,15 +19,14 @@ class EmbeddingService:
         if self._embeddings is None:
             with self._lock:
                 if self._embeddings is None:
-                    logger.info("Using HuggingFace Inference API for embedding model: %s", MODEL_NAME)
-                    if not settings.HUGGINGFACEHUB_API_TOKEN:
-                        logger.warning("HUGGINGFACEHUB_API_TOKEN is not set. The Inference API might fail if heavily rate-limited.")
-                    self._embeddings = HuggingFaceEndpointEmbeddings(
-                        model=MODEL_NAME,
-                        task="feature-extraction",
-                        huggingfacehub_api_token=settings.HUGGINGFACEHUB_API_TOKEN
+                    logger.info("Loading local embedding model: %s", MODEL_NAME)
+                    # Use local model for embedding generation
+                    self._embeddings = HuggingFaceEmbeddings(
+                        model_name=MODEL_NAME,
+                        model_kwargs={'device': 'cpu'}, # Force CPU to avoid CUDA dependency issues
+                        encode_kwargs={'normalize_embeddings': True}
                     )
-                    logger.info("HuggingFace Inference API configured successfully.")
+                    logger.info("Local embedding model loaded successfully.")
         return self._embeddings
         
     def _validate_embedding_dimension(self, embedding: list[float]) -> None:
