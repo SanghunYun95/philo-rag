@@ -90,31 +90,36 @@ def update_metadata():
     
     for i, (title, meta) in enumerate(METADATA_MAPPING.items()):
         try:
-            # Fetch all documents with this book title to update them individually
-            # This preserves per-chunk metadata like chunk_index
-            res = supabase.table("documents").select("id, metadata").eq("metadata->book_info->>title", title).execute()
+            # Fetch all documents with this book title to update them in a batch
+            res = supabase.table("documents").select("id, content, embedding, metadata").eq("metadata->book_info->>title", title).execute()
             
             if not res.data:
                 logger.warning(f"[{i+1}/{total}] Book not found in DB: {title}")
                 continue
                 
-            # Update each document individually to preserve unique chunk_index
+            # Prepare batch data for atomicity (at book level)
+            batch_data = []
             for doc in res.data:
-                update_data = {
+                batch_data.append({
+                    "id": doc["id"],
+                    "content": doc["content"],
+                    "embedding": doc["embedding"],
                     "metadata": {
                         **doc["metadata"],
                         "kr_title": meta["kr_title"],
                         "thumbnail": meta["thumbnail"],
                         "link": meta["link"]
                     }
-                }
-                supabase.table("documents").update(update_data).eq("id", doc["id"]).execute()
+                })
             
-            logger.info(f"[{i+1}/{total}] Successfully updated {len(res.data)} chunks: {meta['kr_title']}")
+            if batch_data:
+                # Upsert uses unique ID to update existing rows atomically in one request
+                supabase.table("documents").upsert(batch_data).execute()
+                logger.info(f"[{i+1}/{total}] Successfully updated {len(batch_data)} chunks atomically: {meta['kr_title']}")
             
         except Exception as e:
             logger.error(f"[{i+1}/{total}] Error updating {title}: {e!r}")
-            # Re-raise to ensure non-zero exit and error visibility
+            # Ensure the script exits with non-zero on failure
             raise
 
 if __name__ == "__main__":
