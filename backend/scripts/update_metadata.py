@@ -91,7 +91,7 @@ def update_metadata():
     for i, (title, meta) in enumerate(METADATA_MAPPING.items()):
         try:
             # Fetch all documents with this book title to update them in a batch
-            res = supabase.table("documents").select("id, content, embedding, metadata").eq("metadata->book_info->>title", title).execute()
+            res = supabase.table("documents").select("id, metadata").eq("metadata->'book_info'->>'title'", title).execute()
             
             if not res.data:
                 logger.warning(f"[{i+1}/{total}] Book not found in DB: {title}")
@@ -102,8 +102,6 @@ def update_metadata():
             for doc in res.data:
                 batch_data.append({
                     "id": doc["id"],
-                    "content": doc["content"],
-                    "embedding": doc["embedding"],
                     "metadata": {
                         **doc["metadata"],
                         "kr_title": meta["kr_title"],
