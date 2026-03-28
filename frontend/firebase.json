@@ -1,0 +1,17 @@
+{
+  "hosting": {
+    "site": "vigilant-shift-490601-t5",
+    "public": "out",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
