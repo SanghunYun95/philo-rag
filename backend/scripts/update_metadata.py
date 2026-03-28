@@ -100,14 +100,19 @@ def update_metadata():
             # Prepare batch data for atomicity (at book level)
             batch_data = []
             for doc in res.data:
+                # Merge new fields into nested book_info to maintain structure
+                new_metadata = doc["metadata"].copy()
+                book_info = new_metadata.get("book_info", {}).copy()
+                book_info.update({
+                    "kr_title": meta["kr_title"],
+                    "cover_url": meta["thumbnail"] or book_info.get("cover_url", ""),
+                    "link": meta["link"] or book_info.get("link", "")
+                })
+                new_metadata["book_info"] = book_info
+                
                 batch_data.append({
                     "id": doc["id"],
-                    "metadata": {
-                        **doc["metadata"],
-                        "kr_title": meta["kr_title"],
-                        "thumbnail": meta["thumbnail"],
-                        "link": meta["link"]
-                    }
+                    "metadata": new_metadata
                 })
             
             if batch_data:

@@ -6,7 +6,7 @@
 
 ## 1. 핵심 원칙 (Core Philosophy)
 
-- **Docs-as-Code:** 모든 기능의 시작은 `documents/stories/` 내의 스토리 파일입니다.
+- **Docs-as-Code:** 모든 기능의 시작은 `.agent/documents/stories/` 내의 스토리 파일입니다.
 - **Behavior-driven:** 기능은 사용자의 행동과 기대 결과(Acceptance Criteria) 중심으로 정의합니다.
 - **Model-based:** 복잡한 로직은 텍스트보다는 구조화된 모델(Mermaid 다이어그램, JSON 스키마 등)로 표현합니다.
 - **Context Integrity:** 문서를 스토리 단위로 쪼개어 AI가 필요한 정보에만 집중하게 합니다.
@@ -18,7 +18,7 @@
 ### 📋 [Analysis Phase] - 비즈니스 분석가 (Analyst)
 
 - **목표:** 모호한 요구사항을 명확한 '스토리(Story)'로 변환합니다.
-- **결과물:** `documents/stories/ID.story_name.md` (Gherkin 스타일의 Behavior 정의 포함)
+- **결과물:** `.agent/documents/stories/ID.story_name.md` (Gherkin 스타일의 Behavior 정의 포함)
 - **지침:** "사용자가 ~할 때, ~한 결과가 나와야 한다"는 비즈니스 로직에 집중합니다.
 
 ### 📐 [Architecture Phase] - 시스템 설계자 (Architect)
@@ -46,7 +46,7 @@
 ### ① 기획 및 설계 시나리오
 
 **지시:** "BMAD 스킬로 'AI 기반 계약 생애주기 관리(CLM) 플랫폼을 위한 공통 시스템(Shared System) 백엔드 코어 모듈' 스토리 파일 만들어줘."
-**AI 행동:** `documents/stories/001.clm-shared-system-core-module.md` 생성 후 승인 요청.
+**AI 행동:** `.agent/documents/stories/001.clm-shared-system-core-module.md` 생성 후 승인 요청.
 
 ### ② 프롬프트 예시
 
