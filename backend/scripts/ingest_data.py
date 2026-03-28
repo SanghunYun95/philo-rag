@@ -5,6 +5,7 @@ import uuid
 import urllib.request
 import argparse
 import concurrent.futures
+import re
 from typing import List, Dict
 
 # Ensure we can import app modules
@@ -49,7 +50,7 @@ def generate_deterministic_uuid(seed_text: str) -> str:
     """Generates a consistent UUID based on the input text to ensure idempotency."""
     return str(uuid.uuid5(UUID_NAMESPACE, seed_text))
 
-import re
+
 
 def strip_gutenberg_boilerplate(text: str) -> str:
     """Removes Project Gutenberg START and END identifiers from the text."""
@@ -69,7 +70,8 @@ def strip_gutenberg_boilerplate(text: str) -> str:
         text = text[:end_match.start()]
     else:
         # Fallback to searching for the full license block if marker is missing
-        license_starter = r"THE FULL PROJECT GUTENBERG™ LICENSE"
+        # Robust pattern for trademark variants (TM), (tm), TM, ™
+        license_starter = r"THE FULL PROJECT GUTENBERG(™|\(TM\)|\(tm\)|TM) LICENSE"
         license_match = re.search(license_starter, text, re.IGNORECASE)
         if license_match:
             text = text[:license_match.start()]

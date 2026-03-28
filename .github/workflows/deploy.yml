@@ -16,8 +16,6 @@ env:
   SERVICE_NAME: 'philo-rag-backend'
   GAR_HOST: 'asia-northeast3-docker.pkg.dev'
   IMAGE_NAME: 'philo-rag-backend'
-  # Constructs the full image URI for centralization
-  IMAGE_URI: 'asia-northeast3-docker.pkg.dev/vigilant-shift-490601-t5/cloud-run-source-deploy/philo-rag-backend:latest'
 
 jobs:
   deploy-backend:
@@ -33,6 +31,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           # Falling back to GCP_SA_KEY due to Workload Identity Federation configuration issues
+          # TODO: Migrate to Workload Identity Federation (WIF) when the infra bug is resolved
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
@@ -44,8 +43,10 @@ jobs:
       - name: Build and Push Container
         working-directory: ./backend
         run: |-
-          docker build -t "${{ env.IMAGE_URI }}" .
-          docker push "${{ env.IMAGE_URI }}"
+          IMAGE_TAG="${{ env.GAR_HOST }}/${{ env.PROJECT_ID }}/cloud-run-source-deploy/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          docker build -t "$IMAGE_TAG" .
+          docker push "$IMAGE_TAG"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Deploy to Cloud Run
         id: deploy
@@ -53,7 +54,7 @@ jobs:
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          image: ${{ env.IMAGE_URI }}
+          image: ${{ env.IMAGE_TAG }}
           env_vars: |-
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             SUPABASE_URL=${{ secrets.SUPABASE_URL }}

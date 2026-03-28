@@ -101,11 +101,25 @@ def update_metadata():
             batch_data = []
             for doc in res.data:
                 # Merge new fields into nested book_info to maintain structure
-                new_metadata = doc["metadata"].copy()
-                book_info = new_metadata.get("book_info", {}).copy()
+                metadata_raw = doc.get("metadata")
+                if not isinstance(metadata_raw, dict):
+                    logger.warning(f"Unexpected metadata type for doc {doc.get('id')}: {type(metadata_raw)}")
+                    new_metadata = {}
+                else:
+                    new_metadata = metadata_raw.copy()
+                
+                book_info_raw = new_metadata.get("book_info")
+                if not isinstance(book_info_raw, dict):
+                    book_info = {}
+                else:
+                    book_info = book_info_raw.copy()
+
+                # Update priority: meta["thumbnail"] -> book_info["thumbnail"] -> book_info["cover_url"]
+                cover_url = meta.get("thumbnail") or book_info.get("thumbnail") or book_info.get("cover_url", "")
+                
                 book_info.update({
                     "kr_title": meta["kr_title"],
-                    "cover_url": meta["thumbnail"] or book_info.get("cover_url", ""),
+                    "cover_url": cover_url,
                     "link": meta["link"] or book_info.get("link", "")
                 })
                 new_metadata["book_info"] = book_info

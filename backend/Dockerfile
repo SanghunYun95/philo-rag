@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Setup model cache directory for pre-loading
-RUN mkdir -p /app/model_cache && chmod 777 /app/model_cache
+# Setup model cache directory for pre-loading (restrictive permissions)
+RUN mkdir -p /app/model_cache && chown appuser:appuser /app/model_cache && chmod 755 /app/model_cache
 ENV HF_HOME=/app/model_cache
 
 # Pre-load the embedding model to reduce cold start latency
