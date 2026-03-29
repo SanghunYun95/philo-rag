@@ -19,12 +19,12 @@ def test_supabase():
     """Verify database connection with minimal data exposure."""
     try:
         db = get_client()
-        # Query only non-sensitive columns for verification
-        response = db.table("eval_logs").select("id, created_at").limit(1).execute()
+        # Query with ordering to find the actual latest log
+        response = db.table("eval_logs").select("id, created_at").order("created_at", desc=True).limit(1).execute()
         
         if response.data:
             print("Successfully connected to Supabase and read from eval_logs.")
-            print(f"Verified {len(response.data)} record(s). Latest ID: {response.data[0]['id']}")
+            print(f"Verified {len(response.data)} record(s). Latest entry ID: {response.data[0]['id']} created at {response.data[0]['created_at']}")
         else:
             print("Successfully connected to Supabase, but eval_logs table is empty.")
             

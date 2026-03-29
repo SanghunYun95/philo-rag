@@ -23,8 +23,10 @@ async def test_evaluate_and_log():
     # 모킹: ragas의 evaluate 함수와 supabase insert, 무거운 의존성들
     with patch("app.services.evaluation.evaluate") as mock_eval, \
          patch("app.services.evaluation.get_client") as mock_get_client, \
-         patch("app.services.evaluation.faithfulness") as mock_faithfulness, \
-         patch("app.services.evaluation.answer_relevancy") as mock_answer_relevancy:
+         patch("app.services.evaluation.Faithfulness") as mock_f_cls, \
+         patch("app.services.evaluation.AnswerRelevancy") as mock_ar_cls, \
+         patch("app.services.llm.get_llm") as mock_get_llm, \
+         patch("app.services.embedding.embedding_service") as mock_emb_service:
         
         # mock evaluate result
         mock_eval.return_value = {

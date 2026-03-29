@@ -26,9 +26,9 @@ interface EvalLog {
   created_at: string;
   query: string;
   reformulated_query: string;
-  context_relevance: number;
-  faithfulness: number;
-  answer_relevance: number;
+  context_relevance: number | null;
+  faithfulness: number | null;
+  answer_relevance: number | null;
   answer: string;
   metadata: any;
 }
@@ -51,29 +51,60 @@ export default function EvalDashboard() {
   useEffect(() => {
     const fetchLogs = async () => {
       setError(null);
+      setLoading(true);
+      
+      let adminKey: string | null = null;
       try {
-        // Use the server-side proxy route instead of calling backend directly
-        // to prevent exposing ADMIN_SECRET_KEY to the browser.
-        const response = await fetch("/api/eval-logs");
+        adminKey = localStorage.getItem("philo_admin_key");
+      } catch (e) {
+        // localStorage is blocked (e.g. private mode)
+      }
+
+      if (!adminKey) {
+        // Fallback for missing key: prompt user
+        adminKey = window.prompt("대시보드 조회를 위한 관리자 비밀키(ADMIN_SECRET_KEY)를 입력해주세요.");
+        if (!adminKey) {
+            setError("관리자 권한이 필요합니다. 페이지를 새로고침하여 키를 입력해주세요.");
+            setLoading(false);
+            return;
+        }
+        // Note: We no longer persist the adminKey to localStorage for security reasons.
+      }
+
+      try {
+        const envBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const isLocalDev = typeof window !== 'undefined' && window.location.hostname === "localhost";
+        const baseUrl = envBaseUrl ?? (isLocalDev ? "http://localhost:8000" : null);
+
+        if (!baseUrl) {
+          setError("API 서버 주소가 설정되지 않았습니다. NEXT_PUBLIC_API_BASE_URL을 확인해주세요.");
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(`${baseUrl}/api/v1/chat/eval-logs`, {
+            headers: {
+                "x-admin-key": adminKey
+            }
+        });
+        
         if (response.ok) {
           const data = await response.json();
-          // The proxy API returns [] on empty or {error: "..."} on fail
           if (Array.isArray(data)) {
              setLogs(data);
           } else {
-             const errMsg = data.error || "받아온 데이터 형식이 올바르지 않습니다.";
-             setError(errMsg);
-             console.error("Dashboard page: received non-array response", data);
+             setError("받아온 데이터 형식이 올바르지 않습니다.");
           }
+        } else if (response.status === 401) {
+           try {
+             localStorage.removeItem("philo_admin_key");
+           } catch (e) {}
+           setError("관리자 키가 올바르지 않습니다. 새로고침 후 다시 시도해주세요.");
         } else {
-           const errData = await response.json().catch(() => ({}));
-           const errMsg = errData.error || `서버 응답 오류 (상태 코드: ${response.status})`;
-           setError(errMsg);
-           console.error("Dashboard server-side proxy responded with error status", response.status);
+           setError(`서버 응답 오류 (상태 코드: ${response.status})`);
         }
       } catch (err: any) {
         setError(err.message || "평가 로그를 불러오는 중에 예상치 못한 오류가 발생했습니다.");
-        console.error("Failed to fetch evaluation logs", err);
       } finally {
         setLoading(false);
       }
@@ -92,10 +123,16 @@ export default function EvalDashboard() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
 
+  const averageOf = (values: Array<number | null>) => {
+    const validValues = values.filter((v): v is number => v !== null);
+    if (validValues.length === 0) return null;
+    return validValues.reduce((acc, v) => acc + v, 0) / validValues.length;
+  };
+
   const averages = (loading || error || logs.length === 0) ? null : {
-    faithfulness: logs.reduce((acc, log) => acc + (log.faithfulness || 0), 0) / logs.length,
-    relevance: logs.reduce((acc, log) => acc + (log.answer_relevance || 0), 0) / logs.length,
-    context: logs.reduce((acc, log) => acc + (log.context_relevance || 0), 0) / logs.length,
+    faithfulness: averageOf(logs.map(log => log.faithfulness)),
+    relevance: averageOf(logs.map(log => log.answer_relevance)),
+    context: averageOf(logs.map(log => log.context_relevance)),
   };
 
   const getScoreColor = (score: number | null | undefined) => {
@@ -109,21 +146,21 @@ export default function EvalDashboard() {
     { label: "최근 평가 수", value: (loading || error) ? "..." : logs.length, icon: Layers, color: "text-blue-400" },
     { 
       label: "최근 평균 신뢰성 (Faithfulness)", 
-      value: averages ? `${(averages.faithfulness * 100).toFixed(1)}%` : "--", 
+      value: averages?.faithfulness != null ? `${(averages.faithfulness * 100).toFixed(1)}%` : "--", 
       icon: CheckCircle2, 
       color: "text-emerald-400", 
       score: averages?.faithfulness ?? null 
     },
     { 
       label: "최근 평균 적합성 (Relevance)", 
-      value: averages ? `${(averages.relevance * 100).toFixed(1)}%` : "--", 
+      value: averages?.relevance != null ? `${(averages.relevance * 100).toFixed(1)}%` : "--", 
       icon: BarChart3, 
       color: "text-amber-400", 
       score: averages?.relevance ?? null 
     },
     { 
       label: "최근 평균 컨텍스트 정확도", 
-      value: averages ? `${(averages.context * 100).toFixed(1)}%` : "--", 
+      value: averages?.context != null ? `${(averages.context * 100).toFixed(1)}%` : "--", 
       icon: Search, 
       color: "text-purple-400", 
       score: averages?.context ?? null 
@@ -262,19 +299,19 @@ export default function EvalDashboard() {
                           </td>
                           <td className="px-6 py-4">
                             <div className={cn("px-3 py-1.5 rounded-xl border text-center font-bold text-xs", getScoreColor(log.faithfulness))}>
-                              {(log.faithfulness * 100).toFixed(0)}%
+                               {log.faithfulness != null ? `${(log.faithfulness * 100).toFixed(0)}%` : "N/A"}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className={cn("px-3 py-1.5 rounded-xl border text-center font-bold text-xs", getScoreColor(log.answer_relevance))}>
-                              {(log.answer_relevance * 100).toFixed(0)}%
+                               {log.answer_relevance != null ? `${(log.answer_relevance * 100).toFixed(0)}%` : "N/A"}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className={cn("px-2 py-0.5 rounded-full border text-center font-bold text-[10px]",
-                              log.context_relevance > 0.5 ? "border-purple-500/20 text-purple-400 bg-purple-500/5" : "border-slate-800 text-slate-500"
+                              (log.context_relevance ?? 0) > 0.5 ? "border-purple-500/20 text-purple-400 bg-purple-500/5" : "border-slate-800 text-slate-500"
                             )}>
-                              {log.context_relevance > 0.5 ? 'FOUND' : 'MISSING'}
+                               {log.context_relevance != null ? `${(log.context_relevance * 100).toFixed(0)}%` : "N/A"}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
