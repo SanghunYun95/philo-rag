@@ -26,9 +26,9 @@ interface EvalLog {
   created_at: string;
   query: string;
   reformulated_query: string;
-  context_relevance: number;
-  faithfulness: number;
-  answer_relevance: number;
+  context_relevance: number | null;
+  faithfulness: number | null;
+  answer_relevance: number | null;
   answer: string;
   metadata: any;
 }
@@ -53,12 +53,22 @@ export default function EvalDashboard() {
       setError(null);
       setLoading(true);
       
-      let adminKey = localStorage.getItem("philo_admin_key");
+      let adminKey: string | null = null;
+      try {
+        adminKey = localStorage.getItem("philo_admin_key");
+      } catch (e) {
+        // localStorage is blocked (e.g. private mode)
+      }
+
       if (!adminKey) {
         // Fallback for missing key: prompt user
         adminKey = window.prompt("대시보드 조회를 위한 관리자 비밀키(ADMIN_SECRET_KEY)를 입력해주세요.");
         if (adminKey) {
+          try {
             localStorage.setItem("philo_admin_key", adminKey);
+          } catch (e) {
+            // storage quota exceeded or disabled
+          }
         } else {
             setError("관리자 권한이 필요합니다. 페이지를 새로고침하여 키를 입력해주세요.");
             setLoading(false);
@@ -82,7 +92,9 @@ export default function EvalDashboard() {
              setError("받아온 데이터 형식이 올바르지 않습니다.");
           }
         } else if (response.status === 401) {
-           localStorage.removeItem("philo_admin_key");
+           try {
+             localStorage.removeItem("philo_admin_key");
+           } catch (e) {}
            setError("관리자 키가 올바르지 않습니다. 새로고침 후 다시 시도해주세요.");
         } else {
            setError(`서버 응답 오류 (상태 코드: ${response.status})`);
@@ -277,19 +289,19 @@ export default function EvalDashboard() {
                           </td>
                           <td className="px-6 py-4">
                             <div className={cn("px-3 py-1.5 rounded-xl border text-center font-bold text-xs", getScoreColor(log.faithfulness))}>
-                              {(log.faithfulness * 100).toFixed(0)}%
+                               {log.faithfulness != null ? `${(log.faithfulness * 100).toFixed(0)}%` : "N/A"}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className={cn("px-3 py-1.5 rounded-xl border text-center font-bold text-xs", getScoreColor(log.answer_relevance))}>
-                              {(log.answer_relevance * 100).toFixed(0)}%
+                               {log.answer_relevance != null ? `${(log.answer_relevance * 100).toFixed(0)}%` : "N/A"}
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className={cn("px-2 py-0.5 rounded-full border text-center font-bold text-[10px]",
-                              log.context_relevance > 0.5 ? "border-purple-500/20 text-purple-400 bg-purple-500/5" : "border-slate-800 text-slate-500"
+                              (log.context_relevance ?? 0) > 0.5 ? "border-purple-500/20 text-purple-400 bg-purple-500/5" : "border-slate-800 text-slate-500"
                             )}>
-                              {(log.context_relevance * 100).toFixed(0)}%
+                               {log.context_relevance != null ? `${(log.context_relevance * 100).toFixed(0)}%` : "N/A"}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
