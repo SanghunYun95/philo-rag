@@ -61,8 +61,12 @@ export default function EvalDashboard() {
       }
 
       if (!adminKey) {
-        // Fallback for missing key: prompt user
-        adminKey = window.prompt("대시보드 조회를 위한 관리자 비밀키(ADMIN_SECRET_KEY)를 입력해주세요.");
+        // Portfolio Mode: Pre-fill the admin key for convenience
+        const portfolioKey = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY || "AV_87@$&@*_!nJKAsNDJKCXl";
+        adminKey = window.prompt(
+          "대시보드 조회를 위한 관리자 비밀키(ADMIN_SECRET_KEY)를 입력해주세요.\n(포트폴리오 시연을 위해 데모 키가 입력되어 있습니다.)",
+          portfolioKey
+        );
         if (!adminKey) {
             setError("관리자 권한이 필요합니다. 페이지를 새로고침하여 키를 입력해주세요.");
             setLoading(false);
