@@ -16,6 +16,10 @@ import asyncio
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Ensure all required environment variables are set before proceeding
+    from app.core.config import validate_required_settings
+    validate_required_settings()
+    
     # Pre-load embedding model and LLM during startup in a background thread
     logger.info("Pre-loading models in background during startup...")
     
@@ -66,7 +70,13 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for development
+    allow_origins=[
+        "http://localhost:3000",
+        "https://philo-rag.web.app",
+        "https://philo-rag.firebaseapp.com",
+        "https://vigilant-shift-490601-t5.web.app",
+        "https://vigilant-shift-490601-t5.firebaseapp.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

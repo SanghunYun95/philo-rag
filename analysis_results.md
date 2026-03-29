@@ -28,9 +28,18 @@ RUN chown -R appuser:appuser /app && \
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers"]
 ```
 
+### 2. Update `frontend/firebase.json`
+- **Updated `site` ID**: Changed from the default project ID to `philo-rag` to deploy correctly to the `philo-rag.web.app` URL.
+
+### 3. Update `backend/app/main.py`
+- **Explicit CORS Origins**: Replaced the wildcard `["*"]` with an explicit list of origins. Browsers reject `*` when `allow_credentials=True` is used, so defining the specific Firebase and localhost URLs was necessary to fix the "Failed to fetch" errors.
+
 ## Next Steps
-1. **Commit the changes**: The fixed `Dockerfile` is now ready to be pushed to the repository.
-2. **Re-run the GitHub Action**: PR을 `main` 브랜치에 머지(merge)하면 GitHub Actions 워크플로우가 트리거됩니다.
+1. **Commit the changes**: The fixed `Dockerfile`, `main.py`, and `firebase.json` are now ready to be pushed to the repository.
+2. **Re-run the GitHub Action**: When you merge the PR into the `main` branch, the GitHub Actions workflow is triggered.
+3. **Verify the results**: 
+   - Backend URL: Check readiness at `https://[SUBDOMAIN].a.run.app/ready`
+   - Frontend URL: Check `https://philo-rag.web.app/`
 
 > [!TIP]
 > Once the deployment is successful, you can verify the status through the Cloud Run URL or the readiness check endpoint: `/ready`.
