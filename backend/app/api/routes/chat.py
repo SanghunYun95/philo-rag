@@ -174,6 +174,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         return
 
 @router.post("")
+@limiter.limit("5/minute")
 async def chat_endpoint(request: Request, chat_request: ChatRequest):
     """
     Endpoint for accepting chat queries and returning a text/event-stream response.
@@ -181,6 +182,7 @@ async def chat_endpoint(request: Request, chat_request: ChatRequest):
     return EventSourceResponse(generate_chat_events(request, chat_request.query, chat_request.history))
 
 @router.post("/title")
+@limiter.limit("10/minute")
 async def chat_title_endpoint(request: Request, title_request: TitleRequest):
     """
     Endpoint for generating a short chat room title based on the first user query.
