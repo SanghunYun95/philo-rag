@@ -140,7 +140,8 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         logger.info(f"Stream finished. Total chunks: {chunk_count}, Time: {time.perf_counter() - t0:.2f}s")
         
         # evaluation background task
-        if not client_disconnected and background_tasks and final_state:
+        # Fix: Only enqueue evaluation if we have a non-empty answer to avoid log inconsistencies
+        if not client_disconnected and background_tasks and final_state and full_answer:
             from app.services.evaluation import evaluate_and_log
             contexts = [d["content"] for d in final_state.get("documents", [])]
             logger.info("Scheduling background evaluation task...")
@@ -153,7 +154,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
                 context_relevance=1.0 if final_state.get("is_relevant") else 0.0
             )
         else:
-            logger.warning(f"Skipping evaluation. final_state_exists: {bool(final_state)}")
+            logger.info(f"Skipping evaluation. final_state_exists: {bool(final_state)}, has_answer: {bool(full_answer)}")
 
     except Exception:
         logger.exception("Failed while streaming LangGraph response")
@@ -169,7 +170,10 @@ async def get_eval_logs(user: dict = Depends(get_current_user)):
     """
     try:
         from app.services.database import get_client
-        res = get_client().table("eval_logs").select("*").order("created_at", desc=True).limit(50).execute()
+        # Offload sync Supabase call to worker thread to avoid blocking event loop
+        res = await asyncio.to_thread(
+            lambda: get_client().table("eval_logs").select("*").order("created_at", desc=True).limit(50).execute()
+        )
         return res.data
     except Exception as e:
         logger.exception("Failed to fetch evaluation logs from database")

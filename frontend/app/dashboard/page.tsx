@@ -92,23 +92,42 @@ export default function EvalDashboard() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
 
-  const averages = {
-    faithfulness: logs.length ? logs.reduce((acc, log) => acc + (log.faithfulness || 0), 0) / logs.length : 0,
-    relevance: logs.length ? logs.reduce((acc, log) => acc + (log.answer_relevance || 0), 0) / logs.length : 0,
-    context: logs.length ? logs.reduce((acc, log) => acc + (log.context_relevance || 0), 0) / logs.length : 0,
+  const averages = (loading || error || logs.length === 0) ? null : {
+    faithfulness: logs.reduce((acc, log) => acc + (log.faithfulness || 0), 0) / logs.length,
+    relevance: logs.reduce((acc, log) => acc + (log.answer_relevance || 0), 0) / logs.length,
+    context: logs.reduce((acc, log) => acc + (log.context_relevance || 0), 0) / logs.length,
   };
 
-  const getScoreColor = (score: number) => {
+  const getScoreColor = (score: number | null | undefined) => {
+    if (score === null || score === undefined) return "text-slate-500 border-slate-800 bg-slate-800/10";
     if (score >= 0.7) return "text-emerald-400 border-emerald-500/20 bg-emerald-500/5";
     if (score >= 0.4) return "text-amber-400 border-amber-500/20 bg-amber-500/5";
     return "text-rose-400 border-rose-500/20 bg-rose-500/5";
   };
 
   const stats = [
-    { label: "최근 평가 수", value: logs.length, icon: Layers, color: "text-blue-400" },
-    { label: "최근 평균 신뢰성 (Faithfulness)", value: `${(averages.faithfulness * 100).toFixed(1)}%`, icon: CheckCircle2, color: "text-emerald-400", score: averages.faithfulness },
-    { label: "최근 평균 적합성 (Relevance)", value: `${(averages.relevance * 100).toFixed(1)}%`, icon: BarChart3, color: "text-amber-400", score: averages.relevance },
-    { label: "최근 평균 컨텍스트 정확도", value: `${(averages.context * 100).toFixed(1)}%`, icon: Search, color: "text-purple-400", score: averages.context },
+    { label: "최근 평가 수", value: (loading || error) ? "..." : logs.length, icon: Layers, color: "text-blue-400" },
+    { 
+      label: "최근 평균 신뢰성 (Faithfulness)", 
+      value: averages ? `${(averages.faithfulness * 100).toFixed(1)}%` : "--", 
+      icon: CheckCircle2, 
+      color: "text-emerald-400", 
+      score: averages?.faithfulness ?? null 
+    },
+    { 
+      label: "최근 평균 적합성 (Relevance)", 
+      value: averages ? `${(averages.relevance * 100).toFixed(1)}%` : "--", 
+      icon: BarChart3, 
+      color: "text-amber-400", 
+      score: averages?.relevance ?? null 
+    },
+    { 
+      label: "최근 평균 컨텍스트 정확도", 
+      value: averages ? `${(averages.context * 100).toFixed(1)}%` : "--", 
+      icon: Search, 
+      color: "text-purple-400", 
+      score: averages?.context ?? null 
+    },
   ];
 
   return (
@@ -159,13 +178,15 @@ export default function EvalDashboard() {
                 </div>
                 {stat.score !== undefined && (
                   <div className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-widest",
-                    stat.score >= 0.7 
-                      ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" 
-                      : stat.score >= 0.4 
-                        ? "border-amber-500/30 text-amber-400 bg-amber-500/5"
-                        : "border-rose-500/30 text-rose-400 bg-rose-500/5"
+                    stat.score === null 
+                      ? "border-slate-800 text-slate-500"
+                      : stat.score >= 0.7 
+                        ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" 
+                        : stat.score >= 0.4 
+                          ? "border-amber-500/30 text-amber-400 bg-amber-500/5"
+                          : "border-rose-500/30 text-rose-400 bg-rose-500/5"
                   )}>
-                    {stat.score >= 0.7 ? "Healthy" : stat.score >= 0.4 ? "Watch" : "Critical"}
+                    {stat.score === null ? "N/A" : stat.score >= 0.7 ? "Healthy" : stat.score >= 0.4 ? "Watch" : "Critical"}
                   </div>
                 )}
               </div>
