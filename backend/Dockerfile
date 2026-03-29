@@ -39,6 +39,6 @@ RUN python -c "from langchain_huggingface import HuggingFaceEmbeddings; HuggingF
 # Expose the port (Cloud Run defaults to 8080, but can be overridden by $PORT)
 EXPOSE 8080
 
-# Command to run the application using the PORT environment variable
-# We use the shell form or sh -c to ensure the $PORT variable is expanded correctly
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers"]
+# Command to run the application using the PORT environment variable with exec form
+# We use exec to ensure uvicorn becomes the PID 1 process and handles termination signals properly
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers"]

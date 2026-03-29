@@ -22,3 +22,9 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+# Fail-fast validation: ensure essential secrets are configured at startup
+if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
+    raise RuntimeError(
+        "SUPABASE_URL and SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be configured in environment variables."
+    )

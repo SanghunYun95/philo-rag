@@ -33,7 +33,3 @@ check_progress.py
 data/
 tests/
 scripts/
-!scripts/ingest_all_data.py
-!scripts/ingest_data.py
-!scripts/update_db_metadata.py
-!scripts/update_metadata.py

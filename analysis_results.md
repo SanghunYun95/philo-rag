@@ -25,12 +25,12 @@ RUN chown -R appuser:appuser /app && \
 # ...
 
 # Command to run the application using the PORT environment variable
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers"]
 ```
 
 ## Next Steps
 1. **Commit the changes**: The fixed `Dockerfile` is now ready to be pushed to the repository.
-2. **Re-run the GitHub Action**: Pushing these changes to the `main` branch will trigger a new deployment.
+2. **Re-run the GitHub Action**: PR을 `main` 브랜치에 머지(merge)하면 GitHub Actions 워크플로우가 트리거됩니다.
 
 > [!TIP]
 > Once the deployment is successful, you can verify the status through the Cloud Run URL or the readiness check endpoint: `/ready`.
