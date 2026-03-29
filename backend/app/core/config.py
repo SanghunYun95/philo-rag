@@ -23,7 +23,7 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-def validate_required_settings():
+def validate_required_settings() -> None:
     """Fail-fast validation: ensure essential secrets are configured."""
     if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
         raise RuntimeError(
