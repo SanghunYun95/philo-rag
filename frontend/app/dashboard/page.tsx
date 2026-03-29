@@ -44,9 +44,19 @@ export default function EvalDashboard() {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
   useEffect(() => {
+    // Reset to page 1 when filter changes to avoid empty pages
+    setCurrentPage(1);
+  }, [filter]);
+
+  useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await fetch(`${baseUrl}/api/v1/chat/eval-logs`);
+        const adminKey = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY || "dev-secret-key";
+        const response = await fetch(`${baseUrl}/api/v1/chat/eval-logs`, {
+          headers: {
+            "x-admin-key": adminKey
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           setLogs(data);
@@ -185,9 +195,8 @@ export default function EvalDashboard() {
                     {currentLogs.map((log) => (
                       <React.Fragment key={log.id}>
                         <tr 
-                          onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
                           className={cn(
-                            "hover:bg-slate-800/30 transition-colors group cursor-pointer",
+                            "hover:bg-slate-800/30 transition-colors group",
                             expandedId === log.id && "bg-slate-800/40"
                           )}
                         >
@@ -219,9 +228,15 @@ export default function EvalDashboard() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end transition-transform duration-200">
-                              {expandedId === log.id ? <ChevronUp className="w-4 h-4 text-emerald-400" /> : <ChevronDown className="w-4 h-4 text-slate-600 group-hover:text-slate-400" />}
-                            </div>
+                            <button
+                              onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                              aria-expanded={expandedId === log.id}
+                              aria-controls={`details-${log.id}`}
+                              className="flex items-center justify-end w-full py-2 hover:opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50 rounded-lg"
+                              title={expandedId === log.id ? "숨기기" : "자세히 보기"}
+                            >
+                              {expandedId === log.id ? <ChevronUp className="w-5 h-5 text-emerald-400" /> : <ChevronDown className="w-5 h-5 text-slate-600 group-hover:text-slate-400" />}
+                            </button>
                           </td>
                         </tr>
                         <AnimatePresence>
@@ -229,6 +244,7 @@ export default function EvalDashboard() {
                             <tr>
                               <td colSpan={5} className="p-0 border-none bg-slate-900/60">
                                 <motion.div
+                                  id={`details-${log.id}`}
                                   initial={{ height: 0, opacity: 0 }}
                                   animate={{ height: 'auto', opacity: 1 }}
                                   exit={{ height: 0, opacity: 0 }}

@@ -1,11 +1,7 @@
 # Philo-RAG (철학자와의 대화)
 
-<<<<<<< HEAD
 **실제 배포된 사이트 URL:** https://philo-rag.vercel.app/
-**평가 대시보드 URL:** https://philo-rag.vercel.app/dashboard (준비 중)
-=======
-**사이트 URL:** [https://philo-rag.web.app/](https://philo-rag.web.app/)
->>>>>>> 7c7f48ee77ac78913010df69b111f3eb2448d384
+**평가 대시보드 URL:** https://philo-rag.vercel.app/dashboard
 
 ---
 

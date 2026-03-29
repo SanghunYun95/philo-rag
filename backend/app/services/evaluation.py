@@ -4,12 +4,13 @@ from typing import List
 
 try:
     from ragas import evaluate
-    from ragas.metrics import Faithfulness, AnswerRelevancy
+    from ragas.metrics.collections import faithfulness, answer_relevancy
     from datasets import Dataset
 except ImportError:
     evaluate = None
-    Faithfulness = None
-    AnswerRelevancy = None
+    faithfulness = None
+    answer_relevancy = None
+    Dataset = None
 
 from app.services.database import get_client
 
@@ -29,7 +30,7 @@ async def evaluate_and_log(
         logger.warning("RAGAS dependencies not found. Skipping evaluation.")
         return
         
-    logger.info(f"Starting async evaluate_and_log for query: {query}")
+    logger.info("Starting async evaluate_and_log", extra={"query_len": len(query)})
     
     try:
         data = {
@@ -39,16 +40,17 @@ async def evaluate_and_log(
         }
         dataset = Dataset.from_dict(data)
         
-        from app.services.llm import get_llm
-        from app.services.embedding import embedding_service
-        
-        llm = get_llm(new_instance=True)
-        embeddings = embedding_service.embeddings
-        
         def _run_evaluate():
+            from app.services.llm import get_llm
+            from app.services.embedding import embedding_service
+            
+            llm = get_llm(new_instance=True)
+            embeddings = embedding_service.embeddings
+            
+            # Using new collection-style metrics from ragas v0.4+
             return evaluate(
                 dataset=dataset,
-                metrics=[Faithfulness(), AnswerRelevancy()],
+                metrics=[faithfulness(), answer_relevancy()],
                 llm=llm,
                 embeddings=embeddings
             )
@@ -99,7 +101,14 @@ async def evaluate_and_log(
             }
         }
         
-        logger.info(f"Inserting into Supabase eval_logs: {log_data}")
+        logger.info(
+            "Inserting into Supabase eval_logs",
+            extra={
+                "query_len": len(query),
+                "ans_len": len(answer),
+                "ctx_count": len(contexts)
+            }
+        )
         db.table("eval_logs").insert(log_data).execute()
         logger.info("Successfully inserted into Supabase.")
         

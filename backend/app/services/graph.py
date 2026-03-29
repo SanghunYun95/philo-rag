@@ -14,6 +14,9 @@ from app.services.database import get_client
 
 logger = logging.getLogger(__name__)
 
+# Concurrency limit for database RPC calls
+_search_semaphore = asyncio.Semaphore(16)
+
 # --- State Definition ---
 
 class AgentState(TypedDict):
@@ -83,7 +86,8 @@ async def retrieve(state: AgentState):
             {'query_embedding': query_vector, 'match_count': 4}
         ).execute()
         
-    response = await asyncio.to_thread(_search)
+    async with _search_semaphore:
+        response = await asyncio.to_thread(_search)
     documents = response.data or []
     
     return {"documents": documents}

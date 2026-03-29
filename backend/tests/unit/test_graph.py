@@ -49,3 +49,4 @@ async def test_workflow_initialization():
     assert graph is not None
     # graph가 실행 가능한지 여부만 가볍게 체크
     assert hasattr(graph, "ainvoke")
+    assert hasattr(graph, "astream_events"), "Graph must support astream_events for streaming"

@@ -71,6 +71,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
     full_answer = ""
     chunk_count = 0
     final_state = {}
+    client_disconnected = False
     
     try:
         async for event in graph.astream_events(
@@ -79,6 +80,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         ):
             if await request.is_disconnected():
                 logger.info("Client disconnected during streaming.")
+                client_disconnected = True
                 break
                 
             kind = event["event"]
@@ -131,7 +133,7 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         logger.info(f"Stream finished. Total chunks: {chunk_count}, Time: {time.perf_counter() - t0:.2f}s")
         
         # evaluation background task
-        if background_tasks and final_state:
+        if not client_disconnected and background_tasks and final_state:
             from app.services.evaluation import evaluate_and_log
             contexts = [d["content"] for d in final_state.get("documents", [])]
             logger.info("Scheduling background evaluation task...")
@@ -151,8 +153,10 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
 
+from app.core.auth import get_current_user
+
 @router.get("/eval-logs")
-async def get_eval_logs():
+async def get_eval_logs(user: dict = Depends(get_current_user)):
     """
     Fetch the latest evaluation logs from Supabase.
     """

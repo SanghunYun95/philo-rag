@@ -81,7 +81,7 @@ export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, on
                 <div className="p-4 border-t border-white/5 bg-black/20">
                     <Link 
                         href="/dashboard" 
-                        className="flex items-center justify-center gap-3 w-full p-4 rounded-xl text-[#d9b74a] hover:text-white bg-[#d9b74a]/10 hover:bg-[#d9b74a]/20 transition-all focus-visible:outline-none border border-[#d9b74a]/20 group"
+                        className="flex items-center justify-center gap-3 w-full p-4 rounded-xl text-[#d9b74a] hover:text-white bg-[#d9b74a]/10 hover:bg-[#d9b74a]/20 transition-all focus-visible:ring-2 focus-visible:ring-[#d9b74a]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1a1e] border border-[#d9b74a]/20 group"
                         title="RAG 성능 대시보드"
                     >
                         <BarChart3 className="w-5 h-5 group-hover:scale-110 transition-transform" />

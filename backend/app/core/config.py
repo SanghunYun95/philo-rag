@@ -15,6 +15,9 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("SUPABASE_SERVICE_KEY", "SUPABASE_SERVICE_ROLE_KEY")
     ) # Use Service Role Key for backend operations
     
+    # Auth
+    ADMIN_SECRET_KEY: str = "dev-secret-key" # Default for dev, override in .env
+    
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parents[3] / ".env"), 
         env_file_encoding="utf-8",
