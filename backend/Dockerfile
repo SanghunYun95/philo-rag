@@ -41,4 +41,4 @@ EXPOSE 8080
 
 # Command to run the application using the PORT environment variable with exec form
 # We use exec to ensure uvicorn becomes the PID 1 process and handles termination signals properly
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers --forwarded-allow-ips='*'"]
