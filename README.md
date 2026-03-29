@@ -1,9 +1,11 @@
 # Philo-RAG (철학자와의 대화)
-> ⚠️ **안내사항 (Cold Start)**
-> 본 프로젝트의 백엔드 서버는 무료 클라우드 인스턴스에 배포되어 운영 중입니다. 일정 시간 요청이 없으면 서버가 휴면 상태로 전환되므로, **최초 접속 시 (Cold start) 백엔드 응답까지 약 1분 정도의 대기 시간이 발생**할 수 있습니다. 
 
+<<<<<<< HEAD
 **실제 배포된 사이트 URL:** https://philo-rag.vercel.app/
 **평가 대시보드 URL:** https://philo-rag.vercel.app/dashboard (준비 중)
+=======
+**사이트 URL:** [https://philo-rag.web.app/](https://philo-rag.web.app/)
+>>>>>>> 7c7f48ee77ac78913010df69b111f3eb2448d384
 
 ---
 
