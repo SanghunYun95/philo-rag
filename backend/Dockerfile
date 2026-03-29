@@ -19,8 +19,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Create a non-privileged user first so we can use it for directory ownership
 RUN adduser --disabled-password --gecos "" appuser && \
-    mkdir -p /app/model_cache && \
-    chown -R appuser:appuser /app && \
+    mkdir -p /app/model_cache
+
+# Copy source code and fix permissions
+COPY . .
+RUN chown -R appuser:appuser /app && \
     chmod 755 /app/model_cache
 
 ENV HF_HOME=/app/model_cache
@@ -33,8 +36,9 @@ USER appuser
 # This runs as 'appuser', matching the runtime environment
 RUN python -c "from langchain_huggingface import HuggingFaceEmbeddings; HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2', model_kwargs={'device': 'cpu'})"
 
-# Expose the port
+# Expose the port (Cloud Run defaults to 8080, but can be overridden by $PORT)
 EXPOSE 8080
 
-# Command to run the application (0.0.0.0 for Cloud Run)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers"]
+# Command to run the application using the PORT environment variable with exec form
+# We use exec to ensure uvicorn becomes the PID 1 process and handles termination signals properly
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --proxy-headers"]

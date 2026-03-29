@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -9,7 +10,10 @@ class Settings(BaseSettings):
     
     # Supabase Settings
     SUPABASE_URL: str = ""
-    SUPABASE_SERVICE_KEY: str = "" # Use Service Role Key for backend operations
+    SUPABASE_SERVICE_KEY: str = Field(
+        "", 
+        validation_alias=AliasChoices("SUPABASE_SERVICE_KEY", "SUPABASE_SERVICE_ROLE_KEY")
+    ) # Use Service Role Key for backend operations
     
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parents[3] / ".env"), 
@@ -18,3 +22,9 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+# Fail-fast validation: ensure essential secrets are configured at startup
+if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
+    raise RuntimeError(
+        "SUPABASE_URL and SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) must be configured in environment variables."
+    )
