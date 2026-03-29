@@ -16,6 +16,10 @@ import asyncio
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    # Ensure all required environment variables are set before proceeding
+    from app.core.config import validate_required_settings
+    validate_required_settings()
+    
     # Pre-load embedding model and LLM during startup in a background thread
     logger.info("Pre-loading models in background during startup...")
     

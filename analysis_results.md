@@ -36,7 +36,7 @@ CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} 
 
 ## Next Steps
 1. **Commit the changes**: The fixed `Dockerfile`, `main.py`, and `firebase.json` are now ready to be pushed to the repository.
-2. **Re-run the GitHub Action**: PR을 `main` 브랜치에 머지(merge)하면 GitHub Actions 워크플로우가 트리거됩니다.
+2. **Re-run the GitHub Action**: When you merge the PR into the `main` branch, the GitHub Actions workflow is triggered.
 3. **Verify the results**: 
    - Backend URL: Check readiness at `https://[SUBDOMAIN].a.run.app/ready`
    - Frontend URL: Check `https://philo-rag.web.app/`
