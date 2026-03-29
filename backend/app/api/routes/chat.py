@@ -127,8 +127,15 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
                     final_state = output
                 
         if chunk_count == 0 and not full_answer:
-            logger.warning("LLM returned 0 chunks.")
-            yield {"event": "content", "data": "철학자는 난색을 표하며 서적을 뒤적거립니다. 대신 철학자가 답변을 해줄 만한 다른 질문은 없을까요?"}
+            # Check if graph final state already has an answer (e.g. from generate node)
+            # that was not streamed for some reason.
+            full_answer = str(final_state.get("answer") or "")
+            if full_answer:
+                yield {"event": "content", "data": full_answer.replace("\n", "\\n")}
+                chunk_count = 1
+            else:
+                logger.warning("LLM returned 0 chunks and no final answer found.")
+                yield {"event": "content", "data": "철학자는 난색을 표하며 서적을 뒤적거립니다. 대신 철학자가 답변을 해줄 만한 다른 질문은 없을까요?"}
             
         logger.info(f"Stream finished. Total chunks: {chunk_count}, Time: {time.perf_counter() - t0:.2f}s")
         

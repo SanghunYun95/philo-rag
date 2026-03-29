@@ -105,10 +105,10 @@ export default function EvalDashboard() {
   };
 
   const stats = [
-    { label: "전체 평가 수", value: logs.length, icon: Layers, color: "text-blue-400" },
-    { label: "평균 신뢰성 (Faithfulness)", value: `${(averages.faithfulness * 100).toFixed(1)}%`, icon: CheckCircle2, color: "text-emerald-400", score: averages.faithfulness },
-    { label: "평균 적합성 (Relevance)", value: `${(averages.relevance * 100).toFixed(1)}%`, icon: BarChart3, color: "text-amber-400", score: averages.relevance },
-    { label: "평균 컨텍스트 정확도", value: `${(averages.context * 100).toFixed(1)}%`, icon: Search, color: "text-purple-400", score: averages.context },
+    { label: "최근 평가 수", value: logs.length, icon: Layers, color: "text-blue-400" },
+    { label: "최근 평균 신뢰성 (Faithfulness)", value: `${(averages.faithfulness * 100).toFixed(1)}%`, icon: CheckCircle2, color: "text-emerald-400", score: averages.faithfulness },
+    { label: "최근 평균 적합성 (Relevance)", value: `${(averages.relevance * 100).toFixed(1)}%`, icon: BarChart3, color: "text-amber-400", score: averages.relevance },
+    { label: "최근 평균 컨텍스트 정확도", value: `${(averages.context * 100).toFixed(1)}%`, icon: Search, color: "text-purple-400", score: averages.context },
   ];
 
   return (
@@ -159,9 +159,13 @@ export default function EvalDashboard() {
                 </div>
                 {stat.score !== undefined && (
                   <div className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-widest",
-                    stat.score >= 0.7 ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" : "border-slate-800 text-slate-500"
+                    stat.score >= 0.7 
+                      ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/5" 
+                      : stat.score >= 0.4 
+                        ? "border-amber-500/30 text-amber-400 bg-amber-500/5"
+                        : "border-rose-500/30 text-rose-400 bg-rose-500/5"
                   )}>
-                    Healthy
+                    {stat.score >= 0.7 ? "Healthy" : stat.score >= 0.4 ? "Watch" : "Critical"}
                   </div>
                 )}
               </div>
