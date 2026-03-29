@@ -55,7 +55,7 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: ${{ env.IMAGE_TAG }}
-          flags: |-
+          flags: >-
             --allow-unauthenticated
             --memory=2Gi
             --cpu=1
