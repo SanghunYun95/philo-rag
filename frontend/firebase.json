@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "vigilant-shift-490601-t5",
+    "site": "philo-rag",
     "public": "out",
     "ignore": [
       "firebase.json",
