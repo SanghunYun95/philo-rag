@@ -12,49 +12,27 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-import asyncio
-
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Ensure all required environment variables are set before proceeding
     from app.core.config import validate_required_settings
     validate_required_settings()
     
-    # Pre-load embedding model and LLM during startup in a background thread
-    logger.info("Pre-loading models in background during startup...")
+    # Pre-load embedding model and LLM during startup
+    # We do this sequentially on the main thread to ensure proper event loop binding
+    logger.info("Initializing AI models...")
+    from app.services.embedding import embedding_service
+    from app.services.llm import get_llm
     
-    def preload_models():
-        from app.services.embedding import embedding_service
-        from app.services.llm import get_llm
-        _ = embedding_service.embeddings
-        _ = get_llm()
-        logger.info("Pre-loading successful.")
-
-    # Run in a background thread to avoid blocking the Uvicorn port binding on Render
-    preload_task = asyncio.create_task(asyncio.to_thread(preload_models))
-    _app.state.preload_task = preload_task
+    # These calls will initialize the singletons on the main event loop
+    _ = embedding_service.embeddings
+    _ = get_llm()
+    logger.info("Model initialization complete.")
     
-    def _on_preload_done(task: asyncio.Task):
-        try:
-            if task.cancelled():
-                logger.warning("Preload task was cancelled")
-                return
-            task.result()
-        except Exception:
-            logger.exception("Failed to pre-load models")
-            
-    preload_task.add_done_callback(_on_preload_done)
     try:
         yield
     finally:
-        if not preload_task.done():
-            try:
-                # Use wait_for to shield and wait so we don't aggressively cancel a thread that might hang
-                await asyncio.wait_for(asyncio.shield(preload_task), timeout=3.0)
-            except asyncio.TimeoutError:
-                logger.warning("Preload task did not finish before shutdown.")
-            except Exception:
-                logger.exception("Exception occurred while waiting for preload task during shutdown.")
+        pass
 
 app = FastAPI(
     title="PhiloRAG API",
@@ -89,18 +67,6 @@ async def health_check():
 
 @app.get("/ready")
 async def readiness_check():
-    preload_task = getattr(app.state, "preload_task", None)
-    if preload_task is None or not preload_task.done():
-        return JSONResponse({"status": "not_ready"}, status_code=503)
-        
-    if preload_task.cancelled():
-        logger.warning("Preload task was cancelled during readiness check")
-        return JSONResponse({"status": "failed"}, status_code=503)
-        
-    try:
-        preload_task.result()  # re-raises if failed
-    except Exception as e:
-        logger.warning("Preload task failed during readiness check: %s", e)
-        return JSONResponse({"status": "failed"}, status_code=503)
-    else:
-        return {"status": "ready"}
+    # Since models are now pre-loaded sequentially during lifespan startup,
+    # if the server is running and responding, it's ready.
+    return {"status": "ready"}

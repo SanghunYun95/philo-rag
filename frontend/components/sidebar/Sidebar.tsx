@@ -1,5 +1,6 @@
-import { Settings, History, User, X } from "lucide-react";
+import { Settings, History, User, X, BarChart3 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { ActivePhilosophers } from "./ActivePhilosophers";
 import { ContextSources } from "./ContextSources";
@@ -27,8 +28,6 @@ export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, on
 
     // Use active metadata from scroll if available, otherwise use latest message's metadata
     const displayMetadata = activeMetadata.length > 0 ? activeMetadata : currentMetadata;
-
-
 
     return (
         <>
@@ -80,17 +79,14 @@ export function Sidebar({ messages = [], activeMetadata = [], isOpen = false, on
 
                 {/* Bottom Controls */}
                 <div className="p-4 border-t border-white/5 bg-black/20">
-                    <div className="flex items-center justify-around">
-                        <button type="button" aria-label="설정" disabled className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="설정 (준비 중)">
-                            <Settings className="w-5 h-5" />
-                        </button>
-                        <button type="button" aria-label="대화 기록" disabled className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="대화 기록 (준비 중)">
-                            <History className="w-5 h-5" />
-                        </button>
-                        <button type="button" aria-label="프로필" disabled className="p-2 rounded-lg text-white/20 cursor-not-allowed transition-colors focus-visible:outline-none" title="프로필 (준비 중)">
-                            <User className="w-5 h-5" />
-                        </button>
-                    </div>
+                    <Link 
+                        href="/dashboard" 
+                        className="flex items-center justify-center gap-3 w-full p-4 rounded-xl text-[#d9b74a] hover:text-white bg-[#d9b74a]/10 hover:bg-[#d9b74a]/20 transition-all focus-visible:outline-none border border-[#d9b74a]/20 group"
+                        title="RAG 성능 대시보드"
+                    >
+                        <BarChart3 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <span className="font-semibold text-sm tracking-tight">성능 대시보드</span>
+                    </Link>
                 </div>
             </aside>
         </>

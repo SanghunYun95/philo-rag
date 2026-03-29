@@ -36,91 +36,13 @@ def _search_documents(query_vector):
         {'query_embedding': query_vector, 'match_count': 3}
     ).execute()
 
-async def generate_chat_events(request: Request, query: str, history: List[HistoryMessage]):
+from fastapi import APIRouter, Request, Depends, BackgroundTasks
+
+async def generate_chat_events(request: Request, query: str, history: List[HistoryMessage], background_tasks: BackgroundTasks = None):
     """
-    Generator function that streams SSE events.
-    It yields 'metadata' first, then chunks of 'content'.
+    Generator function that streams SSE events using LangGraph.
     """
-    from app.services.llm import get_english_translation, get_response_stream_async
-    from app.services.embedding import embedding_service
-    
-    # 1. Translate Korean query to English // Note: We don't translate history here to save costs and reduce latency
-    t0 = time.perf_counter()
-    try:
-        english_query = await asyncio.wait_for(
-            get_english_translation(query),
-            timeout=CHAT_TIMEOUT,
-        )
-        t1 = time.perf_counter()
-        logger.info(f"Translation successful in {t1 - t0:.2f}s")
-    except asyncio.TimeoutError:
-        logger.warning(f"Translation timed out after {time.perf_counter() - t0:.2f}s")
-        yield {"event": "error", "data": "응답이 지연되고 있어요. 잠시 후 다시 시도해 주세요."}
-        return
-    except Exception:
-        logger.exception("Failed to translate query")
-        yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
-        return
-    
-    # 2. Generate vector representation
-    t2 = time.perf_counter()
-    try:
-        query_vector = await asyncio.wait_for(
-            embedding_service.agenerate_embedding(english_query),
-            timeout=CHAT_TIMEOUT,
-        )
-        t3 = time.perf_counter()
-        logger.info(f"Embedding successful in {t3 - t2:.2f}s")
-    except asyncio.TimeoutError:
-        logger.warning(f"Embedding generation timed out after {time.perf_counter() - t2:.2f}s")
-        yield {"event": "error", "data": "응답이 지연되고 있어요. 잠시 후 다시 시도해 주세요."}
-        return
-    except Exception:
-        logger.exception("Failed to generate query embedding")
-        yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
-        return
-    
-    # 3. Perform hybrid search in Supabase
-    # We use the RPC match_documents function defined in schema.sql
-    t4 = time.perf_counter()
-    try:
-        async with _db_rpc_semaphore:
-            response = await asyncio.to_thread(_search_documents, query_vector)
-        documents = response.data or []
-        t5 = time.perf_counter()
-        logger.info(f"Database search successful in {t5 - t4:.2f}s. Found {len(documents)} docs.")
-    except Exception:
-        logger.exception("Database search failed")
-        yield {"event": "error", "data": "검색 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."}
-        return
-        
-    if not documents:
-        logger.warning(f"No documents found for query in {time.perf_counter() - t4:.2f}s")
-        yield {"event": "content", "data": "관련 철학적 내용을 찾을 수 없습니다."}
-        return
-
-    # 4. Extract contexts and format metadata
-    contexts = []
-    philosophers_meta = []
-    
-    for doc in documents:
-        contexts.append(doc['content'])
-        meta = doc['metadata']
-        # Group metadata to send to the frontend
-        if meta not in philosophers_meta:
-            philosophers_meta.append(meta)
-
-    # 5. Emit Event 1: metadata (Structured JSON)
-    metadata_event = {
-        "philosophers": philosophers_meta
-    }
-    yield {"event": "metadata", "data": json.dumps(metadata_event, ensure_ascii=False)}
-
-    # Add a small delay for frontend to process metadata before sending content
-    await asyncio.sleep(0.1)
-
-    # 6. Emit Event 2: content (Text chunk streaming via LLM)
-    combined_context = "\n\n".join(contexts)
+    from app.services.graph import create_graph
     
     MAX_HISTORY_MESSAGES = 20
     MAX_HISTORY_CHARS = 1000
@@ -141,45 +63,114 @@ async def generate_chat_events(request: Request, query: str, history: List[Histo
         formatted_parts.append(f"{role_name}: {content[:MAX_HISTORY_CHARS]}")
 
     formatted_history = "\n\n".join(formatted_parts)
-            
-    t6 = time.perf_counter()
+    
+    t0 = time.perf_counter()
+    graph = create_graph()
+    
+    metadata_sent = False
+    full_answer = ""
+    chunk_count = 0
+    final_state = {}
+    
     try:
-        chunk_count = 0
-        disconnected = False
-        async for chunk in get_response_stream_async(context=combined_context, query=english_query, history=formatted_history):
-            if chunk_count == 0:
-                logger.info(f"First LLM chunk received in {time.perf_counter() - t6:.2f}s")
-                
-            # If client disconnects, stop generating
+        async for event in graph.astream_events(
+            {"query": query, "history": formatted_history}, 
+            version="v2"
+        ):
             if await request.is_disconnected():
-                disconnected = True
-                logger.info(f"Client disconnected during streaming after {chunk_count} chunks.")
+                logger.info("Client disconnected during streaming.")
                 break
                 
-            chunk_count += 1
-            # Clean up chunk to avoid SSE formatting issues with newlines
-            chunk_clean = chunk.replace("\n", "\\n")
-            yield {"event": "content", "data": chunk_clean}
+            kind = event["event"]
+            tags = event.get("tags", [])
             
-        if not disconnected:
-            if chunk_count == 0:
-                logger.warning(f"LLM returned 0 chunks after {time.perf_counter() - t6:.2f}s. Sending a fallback message.")
-                yield {"event": "content", "data": "철학자는 난색을 표하며 서적을 뒤적거립니다. 대신 철학자가 답변을 해줄 만한 다른 질문은 없을까요?"}
-            else:
-                logger.info(f"Stream finished successfully. Total chunks: {chunk_count}, Total time: {time.perf_counter() - t0:.2f}s")
+            # Emit metadata after the 'retrieve' node finishes
+            if kind == "on_chain_end" and event["name"] == "retrieve":
+                output = event["data"].get("output", {})
+                if isinstance(output, dict) and "documents" in output and not metadata_sent:
+                    documents = output["documents"]
+                    philosophers_meta = []
+                    for doc in documents:
+                        meta = doc.get('metadata')
+                        if meta not in philosophers_meta:
+                            philosophers_meta.append(meta)
+                            
+                    if not documents:
+                        # No documents found, we can still send an empty metadata
+                        pass
+                        
+                    metadata_event = {
+                        "philosophers": philosophers_meta
+                    }
+                    yield {"event": "metadata", "data": json.dumps(metadata_event, ensure_ascii=False)}
+                    metadata_sent = True
+                    await asyncio.sleep(0.1)
+            
+            # Watch for final generation streaming
+            elif kind == "on_chat_model_stream" and "final_generation" in tags:
+                chunk = event["data"]["chunk"].content
+                if isinstance(chunk, str) and chunk:
+                    chunk_count += 1
+                    full_answer += chunk
+                    chunk_clean = chunk.replace("\n", "\\n")
+                    yield {"event": "content", "data": chunk_clean}
+                    
+            elif kind == "on_chain_end":
+                # Debug logging to identify the correct event name if needed
+                # logger.debug(f"Chain end: {event['name']}")
+                
+                # Check if this is the final output of the graph
+                output = event["data"].get("output", {})
+                if isinstance(output, dict) and ("documents" in output or "reformulated_query" in output):
+                    final_state = output
+                
+        if chunk_count == 0 and not full_answer:
+            logger.warning("LLM returned 0 chunks.")
+            yield {"event": "content", "data": "철학자는 난색을 표하며 서적을 뒤적거립니다. 대신 철학자가 답변을 해줄 만한 다른 질문은 없을까요?"}
+            
+        logger.info(f"Stream finished. Total chunks: {chunk_count}, Time: {time.perf_counter() - t0:.2f}s")
+        
+        # evaluation background task
+        if background_tasks and final_state:
+            from app.services.evaluation import evaluate_and_log
+            contexts = [d["content"] for d in final_state.get("documents", [])]
+            logger.info("Scheduling background evaluation task...")
+            background_tasks.add_task(
+                evaluate_and_log,
+                query=query,
+                reformulated_query=final_state.get("reformulated_query", ""),
+                contexts=contexts,
+                answer=full_answer,
+                context_relevance=1.0 if final_state.get("is_relevant") else 0.0
+            )
+        else:
+            logger.warning(f"Skipping evaluation. final_state_exists: {bool(final_state)}")
 
     except Exception:
-        logger.exception("Failed while streaming LLM response")
+        logger.exception("Failed while streaming LangGraph response")
         yield {"event": "error", "data": "오늘은 철학자도 사색의 시간이 필요하답니다. 내일 다시 지혜를 나누러 올게요."}
         return
 
+@router.get("/eval-logs")
+async def get_eval_logs():
+    """
+    Fetch the latest evaluation logs from Supabase.
+    """
+    try:
+        from app.services.database import get_client
+        res = get_client().table("eval_logs").select("*").order("created_at", desc=True).limit(50).execute()
+        return res.data
+    except Exception:
+        logger.exception("Failed to fetch evaluation logs")
+        return []
+
 @router.post("")
 @limiter.limit("5/minute")
-async def chat_endpoint(request: Request, chat_request: ChatRequest):
+async def chat_endpoint(request: Request, chat_request: ChatRequest, background_tasks: BackgroundTasks):
     """
     Endpoint for accepting chat queries and returning a text/event-stream response.
     """
-    return EventSourceResponse(generate_chat_events(request, chat_request.query, chat_request.history))
+    return EventSourceResponse(generate_chat_events(request, chat_request.query, chat_request.history, background_tasks))
 
 @router.post("/title")
 @limiter.limit("10/minute")
