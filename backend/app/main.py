@@ -19,14 +19,16 @@ async def lifespan(_app: FastAPI):
     validate_required_settings()
     
     # Pre-load embedding model and LLM during startup
-    # We do this sequentially on the main thread to ensure proper event loop binding
-    logger.info("Initializing AI models...")
+    # We offload these heavy initializations to a worker thread so as not to block the event loop.
+    logger.info("Initializing AI models starting (async)...")
     from app.services.embedding import embedding_service
     from app.services.llm import get_llm
     
-    # These calls will initialize the singletons on the main event loop
-    _ = embedding_service.embeddings
-    _ = get_llm()
+    # Offload HuggingFace downloads and LLM instantiation to threads
+    await asyncio.gather(
+        asyncio.to_thread(lambda: embedding_service.embeddings),
+        asyncio.to_thread(get_llm)
+    )
     logger.info("Model initialization complete.")
     
     try:

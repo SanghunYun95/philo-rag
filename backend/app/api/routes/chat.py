@@ -164,9 +164,13 @@ async def get_eval_logs(user: dict = Depends(get_current_user)):
         from app.services.database import get_client
         res = get_client().table("eval_logs").select("*").order("created_at", desc=True).limit(50).execute()
         return res.data
-    except Exception:
-        logger.exception("Failed to fetch evaluation logs")
-        return []
+    except Exception as e:
+        logger.exception("Failed to fetch evaluation logs from database")
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Failed to fetch evaluation logs: {str(e)}"
+        ) from e
 
 @router.post("")
 @limiter.limit("5/minute")

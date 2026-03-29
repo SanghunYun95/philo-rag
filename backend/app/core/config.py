@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     ) # Use Service Role Key for backend operations
     
     # Auth
-    ADMIN_SECRET_KEY: str = "dev-secret-key" # Default for dev, override in .env
+    ADMIN_SECRET_KEY: str = "" # Required in production
+    ENV: str = "production"     # "development" to skip some strict checks
     
     model_config = SettingsConfigDict(
         env_file=str(Path(__file__).resolve().parents[3] / ".env"), 
@@ -28,8 +29,16 @@ settings = Settings()
 
 def validate_required_settings() -> None:
     """Fail-fast validation: ensure essential secrets are configured."""
-    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
+    missing = []
+    if not settings.SUPABASE_URL: missing.append("SUPABASE_URL")
+    if not settings.SUPABASE_SERVICE_KEY: missing.append("SUPABASE_SERVICE_KEY")
+    
+    # Requirement: ADMIN_SECRET_KEY must be set unless explicitly in development mode
+    if not settings.ADMIN_SECRET_KEY and settings.ENV != "development":
+        missing.append("ADMIN_SECRET_KEY")
+        
+    if missing:
         raise RuntimeError(
-            "SUPABASE_URL and SUPABASE_SERVICE_KEY (or SUPABASE_SERVICE_ROLE_KEY) "
-            "must be configured in environment variables."
+            f"Required settings missing: {', '.join(missing)}. "
+            "Please configure them in your environment or .env file."
         )

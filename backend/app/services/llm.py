@@ -9,6 +9,13 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 
+from typing import Any, Optional, Type
+from pydantic import BaseModel
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Models will be instantiated lazily or during function call
 _llm = None
 _llm_lock = threading.Lock()
@@ -24,16 +31,17 @@ def get_all_openai_keys() -> list[str]:
         
     return keys
 
-def get_llm(new_instance: bool = False):
+def get_llm(new_instance: bool = False, structured_schema: Any = None):
     """
     Returns the LLM instance. 
     By default returns a singleton bound to the thread/loop where it was first called.
-    Set new_instance=True to get a fresh instance (e.g. for background threads).
+    Set new_instance=True or provide structured_schema to get a fresh instance.
     """
     global _llm
     
-    if new_instance:
-        return _create_llm_instance()
+    # If a schema is requested, we MUST create a fresh chain to apply it to each base model
+    if new_instance or structured_schema is not None:
+        return _create_llm_instance(structured_schema=structured_schema)
 
     if _llm is None:
         with _llm_lock:
@@ -42,30 +50,34 @@ def get_llm(new_instance: bool = False):
                     
     return _llm
 
-def _create_llm_instance():
+def _create_llm_instance(structured_schema: Any = None):
+    """
+    Initializes base chat models and optionally wraps each in structured output 
+    before composing them with fallbacks. This ensures all fallback candidates 
+    honor the schema.
+    """
     keys = get_all_openai_keys()
     if not keys:
         raise RuntimeError("No OPENAI_API_KEY found in .env or environment")
     
-    print(f"Initializing OpenAI instance...")
+    logger.info("Initializing primary OpenAI instance...")
     
-    primary_llm = ChatOpenAI(
-        model="gpt-4o-mini", 
-        api_key=keys[0],
-        temperature=0.7,
-        max_retries=1
-    )
+    def prepare_model(api_key):
+        model = ChatOpenAI(
+            model="gpt-4o-mini", 
+            api_key=api_key,
+            temperature=0.7,
+            max_retries=1
+        )
+        if structured_schema:
+            return model.with_structured_output(structured_schema)
+        return model
+
+    primary_llm = prepare_model(keys[0])
     
     if len(keys) > 1:
-        fallback_llms = [
-            ChatOpenAI(
-                model="gpt-4o-mini", 
-                api_key=k,
-                temperature=0.7,
-                max_retries=1
-            )
-            for k in keys[1:]
-        ]
+        logger.info(f"Adding {len(keys)-1} fallback LLM instances...")
+        fallback_llms = [prepare_model(k) for k in keys[1:]]
         return primary_llm.with_fallbacks(fallback_llms)
     
     return primary_llm

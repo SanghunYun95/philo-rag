@@ -119,8 +119,8 @@ async def grade_documents(state: AgentState):
         Output format: {{"binary_score": "yes" | "no"}}"""
     )
     
-    # Use JSON output parser for structured grading
-    chain = prompt | get_llm().with_structured_output(GradeDocuments)
+    # Use structured LLM via helper that applies it to fallbacks
+    chain = prompt | get_llm(structured_schema=GradeDocuments)
     scored_result = await chain.ainvoke({"query": query, "context": context_text})
     
     is_relevant = scored_result.binary_score.lower() == "yes"

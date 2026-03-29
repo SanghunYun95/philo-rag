@@ -30,6 +30,8 @@ def test_supabase():
             
     except Exception as e:
         print(f"Error connecting to Supabase or reading from eval_logs: {e}")
+        # Explicitly exit with non-zero status for CI/health-check purposes
+        raise SystemExit(1) from e
 
 if __name__ == "__main__":
     test_supabase()

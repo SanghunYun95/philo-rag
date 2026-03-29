@@ -41,7 +41,6 @@ export default function EvalDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
   useEffect(() => {
     // Reset to page 1 when filter changes to avoid empty pages
@@ -51,15 +50,19 @@ export default function EvalDashboard() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const adminKey = process.env.NEXT_PUBLIC_ADMIN_SECRET_KEY || "dev-secret-key";
-        const response = await fetch(`${baseUrl}/api/v1/chat/eval-logs`, {
-          headers: {
-            "x-admin-key": adminKey
-          }
-        });
+        // Use the server-side proxy route instead of calling backend directly
+        // to prevent exposing ADMIN_SECRET_KEY to the browser.
+        const response = await fetch("/api/eval-logs");
         if (response.ok) {
           const data = await response.json();
-          setLogs(data);
+          // The proxy API returns [] on empty or {error: "..."} on fail
+          if (Array.isArray(data)) {
+             setLogs(data);
+          } else {
+             console.error("Dashboard page: received non-array response", data);
+          }
+        } else {
+           console.error("Dashboard server-side proxy responded with error status", response.status);
         }
       } catch (error) {
         console.error("Failed to fetch evaluation logs", error);
@@ -68,7 +71,7 @@ export default function EvalDashboard() {
       }
     };
     fetchLogs();
-  }, [baseUrl]);
+  }, []);
 
   const filteredLogs = logs.filter(log =>
     log.query.toLowerCase().includes(filter.toLowerCase()) ||
