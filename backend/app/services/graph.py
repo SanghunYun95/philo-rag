@@ -103,7 +103,10 @@ async def grade_documents(state: AgentState):
     if not docs:
         return {"is_relevant": False, "retry_count": state.get("retry_count", 0) + 1}
     
-    context_text = "\n\n".join([d["content"] for d in docs])
+    # Safe access to document content; Filter out empty content
+    context_text = "\n\n".join([d.get("content", "") for d in docs if d.get("content")])
+    if not context_text.strip():
+        return {"is_relevant": False, "retry_count": state.get("retry_count", 0) + 1}
     
     prompt = PromptTemplate.from_template(
         """You are a grader assessing relevance of a retrieved document to a user question.
@@ -141,8 +144,8 @@ async def generate(state: AgentState):
     
     query = state["query"]
     history = state["history"]
-    docs = state["documents"]
-    context = "\n\n".join([d["content"] for d in docs])
+    docs = state.get("documents", [])
+    context = "\n\n".join([d.get("content", "") for d in docs if d.get("content")])
     
     prompt = get_rag_prompt()
     chain = prompt | get_llm().with_config({"tags": ["final_generation"]}) | StrOutputParser()

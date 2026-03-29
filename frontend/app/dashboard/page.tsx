@@ -51,29 +51,44 @@ export default function EvalDashboard() {
   useEffect(() => {
     const fetchLogs = async () => {
       setError(null);
+      setLoading(true);
+      
+      let adminKey = localStorage.getItem("philo_admin_key");
+      if (!adminKey) {
+        // Fallback for missing key: prompt user
+        adminKey = window.prompt("대시보드 조회를 위한 관리자 비밀키(ADMIN_SECRET_KEY)를 입력해주세요.");
+        if (adminKey) {
+            localStorage.setItem("philo_admin_key", adminKey);
+        } else {
+            setError("관리자 권한이 필요합니다. 페이지를 새로고침하여 키를 입력해주세요.");
+            setLoading(false);
+            return;
+        }
+      }
+
       try {
-        // Use the server-side proxy route instead of calling backend directly
-        // to prevent exposing ADMIN_SECRET_KEY to the browser.
-        const response = await fetch("/api/eval-logs");
+        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const response = await fetch(`${baseUrl}/api/v1/chat/eval-logs`, {
+            headers: {
+                "x-admin-key": adminKey
+            }
+        });
+        
         if (response.ok) {
           const data = await response.json();
-          // The proxy API returns [] on empty or {error: "..."} on fail
           if (Array.isArray(data)) {
              setLogs(data);
           } else {
-             const errMsg = data.error || "받아온 데이터 형식이 올바르지 않습니다.";
-             setError(errMsg);
-             console.error("Dashboard page: received non-array response", data);
+             setError("받아온 데이터 형식이 올바르지 않습니다.");
           }
+        } else if (response.status === 401) {
+           localStorage.removeItem("philo_admin_key");
+           setError("관리자 키가 올바르지 않습니다. 새로고침 후 다시 시도해주세요.");
         } else {
-           const errData = await response.json().catch(() => ({}));
-           const errMsg = errData.error || `서버 응답 오류 (상태 코드: ${response.status})`;
-           setError(errMsg);
-           console.error("Dashboard server-side proxy responded with error status", response.status);
+           setError(`서버 응답 오류 (상태 코드: ${response.status})`);
         }
       } catch (err: any) {
         setError(err.message || "평가 로그를 불러오는 중에 예상치 못한 오류가 발생했습니다.");
-        console.error("Failed to fetch evaluation logs", err);
       } finally {
         setLoading(false);
       }
@@ -274,7 +289,7 @@ export default function EvalDashboard() {
                             <div className={cn("px-2 py-0.5 rounded-full border text-center font-bold text-[10px]",
                               log.context_relevance > 0.5 ? "border-purple-500/20 text-purple-400 bg-purple-500/5" : "border-slate-800 text-slate-500"
                             )}>
-                              {log.context_relevance > 0.5 ? 'FOUND' : 'MISSING'}
+                              {(log.context_relevance * 100).toFixed(0)}%
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
