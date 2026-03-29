@@ -63,21 +63,25 @@ export default function EvalDashboard() {
       if (!adminKey) {
         // Fallback for missing key: prompt user
         adminKey = window.prompt("대시보드 조회를 위한 관리자 비밀키(ADMIN_SECRET_KEY)를 입력해주세요.");
-        if (adminKey) {
-          try {
-            localStorage.setItem("philo_admin_key", adminKey);
-          } catch (e) {
-            // storage quota exceeded or disabled
-          }
-        } else {
+        if (!adminKey) {
             setError("관리자 권한이 필요합니다. 페이지를 새로고침하여 키를 입력해주세요.");
             setLoading(false);
             return;
         }
+        // Note: We no longer persist the adminKey to localStorage for security reasons.
       }
 
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        const envBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+        const isLocalDev = typeof window !== 'undefined' && window.location.hostname === "localhost";
+        const baseUrl = envBaseUrl ?? (isLocalDev ? "http://localhost:8000" : null);
+
+        if (!baseUrl) {
+          setError("API 서버 주소가 설정되지 않았습니다. NEXT_PUBLIC_API_BASE_URL을 확인해주세요.");
+          setLoading(false);
+          return;
+        }
+
         const response = await fetch(`${baseUrl}/api/v1/chat/eval-logs`, {
             headers: {
                 "x-admin-key": adminKey
@@ -119,10 +123,16 @@ export default function EvalDashboard() {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
 
+  const averageOf = (values: Array<number | null>) => {
+    const validValues = values.filter((v): v is number => v !== null);
+    if (validValues.length === 0) return null;
+    return validValues.reduce((acc, v) => acc + v, 0) / validValues.length;
+  };
+
   const averages = (loading || error || logs.length === 0) ? null : {
-    faithfulness: logs.reduce((acc, log) => acc + (log.faithfulness || 0), 0) / logs.length,
-    relevance: logs.reduce((acc, log) => acc + (log.answer_relevance || 0), 0) / logs.length,
-    context: logs.reduce((acc, log) => acc + (log.context_relevance || 0), 0) / logs.length,
+    faithfulness: averageOf(logs.map(log => log.faithfulness)),
+    relevance: averageOf(logs.map(log => log.answer_relevance)),
+    context: averageOf(logs.map(log => log.context_relevance)),
   };
 
   const getScoreColor = (score: number | null | undefined) => {
@@ -136,21 +146,21 @@ export default function EvalDashboard() {
     { label: "최근 평가 수", value: (loading || error) ? "..." : logs.length, icon: Layers, color: "text-blue-400" },
     { 
       label: "최근 평균 신뢰성 (Faithfulness)", 
-      value: averages ? `${(averages.faithfulness * 100).toFixed(1)}%` : "--", 
+      value: averages?.faithfulness != null ? `${(averages.faithfulness * 100).toFixed(1)}%` : "--", 
       icon: CheckCircle2, 
       color: "text-emerald-400", 
       score: averages?.faithfulness ?? null 
     },
     { 
       label: "최근 평균 적합성 (Relevance)", 
-      value: averages ? `${(averages.relevance * 100).toFixed(1)}%` : "--", 
+      value: averages?.relevance != null ? `${(averages.relevance * 100).toFixed(1)}%` : "--", 
       icon: BarChart3, 
       color: "text-amber-400", 
       score: averages?.relevance ?? null 
     },
     { 
       label: "최근 평균 컨텍스트 정확도", 
-      value: averages ? `${(averages.context * 100).toFixed(1)}%` : "--", 
+      value: averages?.context != null ? `${(averages.context * 100).toFixed(1)}%` : "--", 
       icon: Search, 
       color: "text-purple-400", 
       score: averages?.context ?? null 
