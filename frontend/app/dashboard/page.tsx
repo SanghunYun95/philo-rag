@@ -36,6 +36,7 @@ interface EvalLog {
 export default function EvalDashboard() {
   const [logs, setLogs] = useState<EvalLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,6 +50,7 @@ export default function EvalDashboard() {
 
   useEffect(() => {
     const fetchLogs = async () => {
+      setError(null);
       try {
         // Use the server-side proxy route instead of calling backend directly
         // to prevent exposing ADMIN_SECRET_KEY to the browser.
@@ -59,13 +61,19 @@ export default function EvalDashboard() {
           if (Array.isArray(data)) {
              setLogs(data);
           } else {
+             const errMsg = data.error || "받아온 데이터 형식이 올바르지 않습니다.";
+             setError(errMsg);
              console.error("Dashboard page: received non-array response", data);
           }
         } else {
+           const errData = await response.json().catch(() => ({}));
+           const errMsg = errData.error || `서버 응답 오류 (상태 코드: ${response.status})`;
+           setError(errMsg);
            console.error("Dashboard server-side proxy responded with error status", response.status);
         }
-      } catch (error) {
-        console.error("Failed to fetch evaluation logs", error);
+      } catch (err: any) {
+        setError(err.message || "평가 로그를 불러오는 중에 예상치 못한 오류가 발생했습니다.");
+        console.error("Failed to fetch evaluation logs", err);
       } finally {
         setLoading(false);
       }
@@ -179,6 +187,20 @@ export default function EvalDashboard() {
               <div className="py-20 flex flex-col items-center gap-4 text-slate-500 justify-center">
                 <div className="w-8 h-8 rounded-full border-2 border-slate-800 border-t-emerald-500 animate-spin" />
                 데이터를 불러오고 있습니다...
+              </div>
+            ) : error ? (
+              <div className="py-20 flex flex-col items-center gap-4 text-rose-400 justify-center">
+                <AlertCircle className="w-10 h-10 mb-2 opacity-80" />
+                <div className="text-center">
+                  <p className="font-bold text-lg mb-1">오류가 발생했습니다</p>
+                  <p className="text-sm opacity-70 max-w-xs">{error}</p>
+                </div>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="mt-4 px-6 py-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-rose-400 font-semibold transition-all hover:scale-105 active:scale-95"
+                >
+                  페이지 새로고침
+                </button>
               </div>
             ) : filteredLogs.length === 0 ? (
               <div className="py-20 text-center text-slate-500">데이터가 없습니다.</div>

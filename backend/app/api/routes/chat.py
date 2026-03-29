@@ -169,7 +169,7 @@ async def get_eval_logs(user: dict = Depends(get_current_user)):
         from fastapi import HTTPException
         raise HTTPException(
             status_code=500, 
-            detail=f"Failed to fetch evaluation logs: {str(e)}"
+            detail="Failed to fetch evaluation logs"
         ) from e
 
 @router.post("")
