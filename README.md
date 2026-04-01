@@ -1,6 +1,8 @@
 # Philo-RAG (철학자와의 대화)
+<img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white"><img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black"><img src="https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white"><img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white"><img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white"><img src="https://img.shields.io/badge/LangChain-1C3C3C?style=flat-square&logo=langchain&logoColor=white"><img src="https://img.shields.io/badge/LangGraph-1C3C3C?style=flat-square&logo=langchain&logoColor=white"><img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase&logoColor=white"><img src="https://img.shields.io/badge/Hugging%20Face-FFD21E?style=flat-square&logo=huggingface&logoColor=black">
 
-**실제 배포된 사이트 URL:** https://philo-rag.web.app/
+**사이트 URL:** https://philo-rag.web.app/
+
 **평가 대시보드 URL:** https://philo-rag.web.app/dashboard
 
 ---
@@ -19,8 +21,6 @@
 ---
 
 ## 🏗 아키텍처 및 기술 스택 (Architecture & Tech Stack)
-
-본 애플리케이션은 **Next.js (App Router)** 기반의 프론트엔드와 **FastAPI** 기반의 백엔드로 완전히 분리되어 작동하는 현대적인 마이크로서비스 지향 구조를 가집니다.
 
 ### 프론트엔드 (Frontend)
 - **Framework**: Next.js 16.1.6 (React 19.2.4)
@@ -117,6 +117,8 @@ npm run dev
 이후 `http://localhost:3000`에 접속하여 서비스를 이용하실 수 있습니다.
 
 ---
+<img width="3453" height="8136" alt="NotebookLM Mind Map" src="https://github.com/user-attachments/assets/5763aef3-23a8-4aa5-80e9-b64ddbbed0b6" />
+
 ---
 
 # Philo-RAG (Philosophical Discourse)
