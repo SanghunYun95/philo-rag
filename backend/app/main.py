@@ -19,17 +19,26 @@ async def lifespan(_app: FastAPI):
     validate_required_settings()
     
     # Pre-load embedding model and LLM during startup
-    # We offload these heavy initializations to a worker thread so as not to block the event loop.
     logger.info("Initializing AI models starting (async)...")
-    from app.services.embedding import embedding_service
-    from app.services.llm import get_llm
     
-    # Offload HuggingFace downloads and LLM instantiation to threads
-    await asyncio.gather(
-        asyncio.to_thread(lambda: embedding_service.embeddings),
-        asyncio.to_thread(get_llm)
-    )
-    logger.info("Model initialization complete.")
+    try:
+        from app.services.embedding import embedding_service
+        from app.services.llm import get_llm
+        from app.services.evaluation import warmup_evaluation
+        
+        # We set a timeout for the heavy initialization to prevent extreme startup delays
+        # 60 seconds should be enough for loading models from a local cache
+        async with asyncio.timeout(60):
+            await asyncio.gather(
+                asyncio.to_thread(lambda: embedding_service.embeddings),
+                asyncio.to_thread(get_llm),
+                warmup_evaluation()
+            )
+        logger.info("Model initialization complete.")
+    except asyncio.TimeoutError:
+        logger.warning("Model initialization timed out after 60s. Continuing startup; models will lazy-load.")
+    except Exception as e:
+        logger.error(f"Error during model initialization: {e}. Models will be loaded on demand.")
     
     try:
         yield
