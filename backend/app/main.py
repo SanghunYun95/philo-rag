@@ -37,8 +37,8 @@ async def lifespan(_app: FastAPI):
         logger.info("Model initialization complete.")
     except asyncio.TimeoutError:
         logger.warning("Model initialization timed out after 60s. Continuing startup; models will lazy-load.")
-    except Exception as e:
-        logger.error(f"Error during model initialization: {e}. Models will be loaded on demand.")
+    except Exception:
+        logger.exception("Error during model initialization. Models will be loaded on demand.")
     
     try:
         yield

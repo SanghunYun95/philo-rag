@@ -15,6 +15,9 @@ Faithfulness = None
 AnswerRelevancy = None
 Dataset = None
 
+# Timeout for RAGAS evaluation to prevent blocking the semaphore indefinitely
+EVALUATION_TIMEOUT = 120.0
+
 from app.services.database import get_client
 
 logger = logging.getLogger(__name__)
@@ -88,7 +91,7 @@ async def evaluate_and_log(
                     llm=llm,
                     embeddings=embeddings
                 )
-                logger.info(f"Ragas evaluation completed: {result}")
+                logger.info("Ragas evaluation completed.")
                 
                 # Extract scores securely
                 try:
@@ -114,6 +117,11 @@ async def evaluate_and_log(
                 f_score = safe_float(faithfulness_score)
                 a_score = safe_float(answer_relevance_score)
                 
+                logger.info(
+                    "RAGAS scores extracted",
+                    extra={"faithfulness": f_score, "answer_relevance": a_score}
+                )
+                
                 # 3. Insert into DB (within the same thread to keep everything out of event loop)
                 db = get_client()
                 log_data = {
@@ -133,7 +141,13 @@ async def evaluate_and_log(
                 logger.info("Successfully inserted into Supabase.")
                 return f_score, a_score
                 
-            await asyncio.to_thread(_run_evaluate_and_log)
+            try:
+                await asyncio.wait_for(
+                    asyncio.to_thread(_run_evaluate_and_log),
+                    timeout=EVALUATION_TIMEOUT
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Evaluation timed out after {EVALUATION_TIMEOUT}s and was aborted.")
         
     except Exception as e:
         logger.exception("Failed during evaluate_and_log background task.")
