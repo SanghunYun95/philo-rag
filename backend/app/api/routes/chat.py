@@ -166,21 +166,29 @@ from app.core.auth import get_current_user
 @router.get("/eval-logs")
 async def get_eval_logs(user: dict = Depends(get_current_user)):
     """
-    Fetch the latest evaluation logs from Supabase.
+    Supabase 'eval_logs' 테이블에서 최근 50개의 평가 로그를 조회합니다.
     """
+    logger.info("--- FETCHING EVAL LOGS START ---")
+    start_time = asyncio.get_event_loop().time()
     try:
         from app.services.database import get_client
-        # Offload sync Supabase call to worker thread to avoid blocking event loop
-        res = await asyncio.to_thread(
-            lambda: get_client().table("eval_logs").select("*").order("created_at", desc=True).limit(50).execute()
-        )
+        
+        # Offload sync Supabase call to worker thread
+        def _fetch():
+            return get_client().table("eval_logs").select("*").order("created_at", desc=True).limit(50).execute()
+            
+        res = await asyncio.to_thread(_fetch)
+        
+        duration = asyncio.get_event_loop().time() - start_time
+        logger.info(f"--- FETCHING EVAL LOGS COMPLETE (Took {duration:.2f}s) ---")
+        
         return res.data
     except Exception as e:
         logger.exception("Failed to fetch evaluation logs from database")
         from fastapi import HTTPException
         raise HTTPException(
             status_code=500, 
-            detail="Failed to fetch evaluation logs"
+            detail="평가 로그를 불러오는 중 오류가 발생했습니다."
         ) from e
 
 @router.post("")

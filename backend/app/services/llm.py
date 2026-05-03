@@ -16,20 +16,34 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Cache for OpenAI keys to avoid repeated disk I/O
+_cached_openai_keys: Optional[list[str]] = None
+_keys_lock = threading.Lock()
+
 # Models will be instantiated lazily or during function call
 _llm = None
 _llm_lock = threading.Lock()
 
 def get_all_openai_keys() -> list[str]:
-    """Reads active OPENAI_API_KEY assignments from the root .env file."""
-    env_path = Path(__file__).resolve().parents[3] / ".env"
-    keys = parse_openai_api_keys(env_path)
-                    
-    # Ensure the one from environment variables/settings is also included
-    if getattr(settings, "OPENAI_API_KEY", None) and settings.OPENAI_API_KEY not in keys:
-        keys.insert(0, settings.OPENAI_API_KEY)
-        
-    return keys
+    """Reads active OPENAI_API_KEY assignments from the root .env file. Results are cached."""
+    global _cached_openai_keys
+    
+    if _cached_openai_keys is not None:
+        return _cached_openai_keys
+
+    with _keys_lock:
+        if _cached_openai_keys is not None:
+            return _cached_openai_keys
+            
+        env_path = Path(__file__).resolve().parents[3] / ".env"
+        keys = parse_openai_api_keys(env_path)
+                        
+        # Ensure the one from environment variables/settings is also included
+        if getattr(settings, "OPENAI_API_KEY", None) and settings.OPENAI_API_KEY not in keys:
+            keys.insert(0, settings.OPENAI_API_KEY)
+            
+        _cached_openai_keys = keys
+        return keys
 
 def get_llm(new_instance: bool = False, structured_schema: Any = None):
     """
